@@ -20,7 +20,6 @@
     <textarea id="source">
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
-
 ---
 name: Intro/Abstract
 class: center, middle
@@ -35,9 +34,8 @@ Thanks everybody for coming here
 
 Hi everybody, thanks for attending scalaua conference, and thanks scalaua cometee and Ruslan for giving me a chance to be here
 
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
-
+---
 class: center, middle
 name: Abstract
 
@@ -60,12 +58,13 @@ So this talk is for those of you who felt scared (like I was) or felt that you a
 because knowledge is a power and <не знаня> makes you feel scared and aggreessive)
 {this is the information I wanted somebofy to gave me 1-2 years ago when I met shapeless for the first time}
 
+The idea of derivation is used in many libraries and itself it is considered somewhat "library-thing"?? - like shapeless is made for those who write libraries - it is too complex for regular production usage
+
 <!-- this is  -->
 // The level of a talk would be around middle scala-dev who just started to investigate shapeless library or at least have strong understanding what implicits in scala do and is aware of basic capabilities of a type system in scala.
 
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
-
+---
 name: Agenda
 class: center, middle
 
@@ -81,7 +80,7 @@ class: center, middle
 1. Introduction
 2. ADTs -> HList
 3. Generic programming
-4. Type-class pattern
+4. Type Class pattern
 5. Live coding
 
 I will try to explain some of the basics and kind-of extend understanding of the ADT types and have a look at them from some different maybe higher perspective
@@ -111,8 +110,9 @@ quick agenda
   - (Might be live-coding through the talk explaining concepts step-by-step) Build simple CSV (or Json) serializer in a type-safe way using type-class derivation for case classes
   - some more real-life use-cases of Shapeless
 
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: domain-modelling
 
 # How do we model our domain?
 
@@ -128,9 +128,9 @@ Coproduct
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+name: adts
 layout: true
 class: left
-name: ADT
 
 # ADTs
 
@@ -138,6 +138,7 @@ ADT stand for Algebraic Data types
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+name: generic-prog
 
 # Generic programming
 
@@ -153,16 +154,22 @@ and that means you do a kind of programming when you write algorithms in terms o
 
 In such way we are generalizing over common properties of functions/objects
 
-
 this is what generic programming is all about
 
+of course - there certain technics more sophisticated then just writing
 
 .......
 concretising too early - lean software development methodologies - make a decisions as late as possible
 
+
+
+
+one of those techincs - is type definition
+very simple at first - it enables a lot more sophisticated in connection with implicits
+
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
-
+name: adt-arity
 layout: false
 
 # What about ADTs?
@@ -170,28 +177,36 @@ layout: false
 Abstracting over arity
 --
 
+/OK THIS PROBABLY IRRELEVANT / TOO EASY - show ADTs -> Tuples -> Eithers -> ??? (HList)
 ```scala
   case class Employee(name: String, age: Integer)
+--
 //              ||
 //              \/
       Tuple2[String, Integer] // abstracting over ADT name
+--
 //              ||
 //              \/
           Tuple2[A, B]
+--
 //              ||
 //              \/
-               ??? 
+            Tuple[N]??? 
 ```
 
 ## _How to abstract over arity of a product?_
 
+kind-of move this TupleN to Tuple[N]
+
 
 ???
 
+so the arity is basically number of fields
 Well we will see later
 
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: hlist
 
 # HList
 
@@ -214,14 +229,15 @@ btw in scala 2.12 the annotation @showAsInfix was added which enables infix type
 (move below - after HList or when complex structure goes) going further for a minute - this is something which can help debugging
 
 naming Product <-> HList
-The idea behind HList is very very simple - …. recursive types
+The idea behind HList is very very simple - .. recursive types
 The capabilities of type system in Java is enough to implement this - it will take you 20-30 lines
 or any other language - the plus of scala is that it allows infix type syntax which make possible following notation (A1 :: A2 :: … :: HNil)
 
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: type-class
 
-# Type-class
+# Type Class
 
 ```scala
 trait Encoder[A] {
@@ -268,9 +284,12 @@ at some point you will have to deal with ADTs
 You just need to start looking at the definition from the trait - typeclass definition
 and there can be a bunch of other stuff with implicits resolution helpers - apply,implicit class - but the main thing to look at is trat definition
 
+and then comes implicit instances - 
 
----
+
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: simulacram
 
 # https://github.com/mpilquist/simulacrum
 
@@ -291,14 +310,17 @@ the same way we have `case class` generating a whole bunch of stuff with hascode
 Really nice way for expressing
 although it's obvious that this is just a workaround and kind-of temporary solution until real first-class support will be added. I believe
 
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: generic-shape
+
+.footnote[.red.bold[*] Important footnote]
 
 # Generic
 
 ```scala
 trait Generic[A] {
-  type Repr
+* type Repr
   def to(value: A): Repr
   def from(value: Repr): A
 }
@@ -311,8 +333,9 @@ trait Generic[A] {
 switching representations
 
 
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: live-code1
 
 .. live code
 basic instances for csv encoding
@@ -326,8 +349,9 @@ Lets look at another example
 
 
 
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: aux
 
 # Aux Pattern
 
@@ -356,8 +380,9 @@ Whenever you need to summon instance with dependent type like `Foo[???] { type B
 you need to use type alias -> Aux pattern
 
 
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: live-code2
 
 .. live code
 instances for products
@@ -366,17 +391,20 @@ coproducts
 
 
 
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: live-code-lazy
+
 # Lazy
 implicit divergence
 
 tree--like structure
 
 
-
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: debugging
+
 # Debugging implicits
 
 - once you have a lot of nested fields - its a problem - compiler will end up with non-descriptive messages ...
@@ -392,11 +420,9 @@ Hlist Size typeclass https://youtu.be/JKaCCYZYBWo?t=389
 
 
 
-
-
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
-
+---
+name: generic?
 
 
 ```scala
@@ -422,6 +448,7 @@ trait Generic[A, Repr] {
 
 then we can't reuse it in some other context
 
+<!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
 
 # Dependent types concept
@@ -433,8 +460,61 @@ then we can't reuse it in some other context
 
 this makes scala dependent-typed? language
 
----
+
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: dep-fns
+
+# Dependent typed functions
+
+???
+We've already seen a Last, Init type classes (or something else)
+Lets think about application of them and remind classic scala function definitions
+
+
+<!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+template: dep-fns
+
+```scala
+  trait Function0[R] {
+
+    def apply(): R
+  }
+
+  trait Function1[T, R] {
+
+    def apply(t: T): R
+  }
+```
+
+---
+template: dep-fns
+```scala
+  trait DependentFunction0 {
+*   type Out
+    def apply(): Out
+  }
+
+  trait DependentFunction1[T] {
+*   type Out
+    def apply(t: T): Out
+  }
+```
+
+???
+
+The idea is to have a type inside a trait with apply - we can output type in some other
+
+<!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+
+.. <livecode> chaining dependent type functions (with Aux)
+
+# Type-class composition ???
+
+<!-- ------------------------------------------------------------------------------------------------------------ -->
+---
 
 # Going a little bit further
 
@@ -447,6 +527,8 @@ this makes scala dependent-typed? language
 
 \* -> \*
 \* x \* -> \*
+https://youtu.be/hzf3hTUKk8U?t=634
+
 
 --
 ```scala
@@ -457,25 +539,23 @@ val id: Int => Int
 type Id[X] = X
 ```
 
-???
+--
+```scala
+  trait λ { type ap[_ <: λ] <: λ }
+  type I = λ{type ap[X<:λ] = X }
+  type K = λ{type ap[X<:λ] = λ{type ap[Y<:λ] = X }}
+  type S = λ{type ap[X<:λ] = λ{type ap[Y<:λ] = λ{type ap[Z<:λ] = X#ap[Z]#ap[Y#ap[Z]] }}}
+```
 
+???
+>
 In order to provide some even more context - lets look at the , and try to kind of categorize these
 
 /?do not talk about something youre not fully familiar with//// btw - such categorization comes from mathematic logic and type theory  - there is something called Lambda cube ////
 
----
+
 <!-- ------------------------------------------------------------------------------------------------------------ -->
-
-.. <livecode> implicit vs the
-
 ---
-
-.. <livecode> chaining dependent type functions (with Aux)
-
-# Type-class composition ???
-
----
-<!-- ------------------------------------------------------------------------------------------------------------ -->
 
 # Capture field names?
 
@@ -494,6 +574,12 @@ LabbeledGeneric
 
 ???
 
+Well the HList abstraction is not very suitable to represent real-world domain
+as it lacks very important piece of infromation about data - meta data - field names.
+Hlist itself can be considered as ResultSet in jdbc therminology - but we need a schema for that
+
+
+
 Wel, what if need smth more generic
 What if we need to serialize to json - we need field names
 In fact its meta information
@@ -506,10 +592,12 @@ Here comes HMap which intuitively understandable concept
 once you know about HList -> Hlist with labbeled data (field names)
 
 
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
 
 # Phantom types
+
+
 
 .. <livecode> type tagging
 
@@ -521,9 +609,30 @@ once you know about HList -> Hlist with labbeled data (field names)
 
 btw - scala2.12 and typelevel scala supports singleton types already
 
-
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: live-code-migration
+
+live-code-migration
+
+???
+
+...
+
+in fact dependent function in scala 2.12 has this one-method funciton first-class support
+which makes them look as regular function
+
+<!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+
+# Monoid typeclass derivation
+
+Just to tell you a few words more about what you can actually do with all of this
+
+
+<!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+exclude: true
 
 # use-cases
 
@@ -556,7 +665,10 @@ object Projections {
     sort: Option[String] = None, order: Boolean = true): Seq[Map[String, Any]] = ???
 
 ```
+<!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+exclude: true
+
 ```scala
   def findFields(filter: Traversable[Predicate], fields: Traversable[String],
     offset: Option[Int] = None, limit: Option[Int] = None,
@@ -616,17 +728,32 @@ ops
 Poly
 
 
----
-
-Compilation Times
-
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+
+# TypeClass Type Class
+
+???
+
+We've already seen a derivation for
+
+<dead astronaut>
+
+<!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+
+# Compilation Times
+
+- typesafe scala
+- 
+
+<!-- ------------------------------------------------------------------------------------------------------------ -->
+---
 
 class: middle, center
 name: real-life
 
-# Back to earth again...
+# Back to the Earth Again...
 
 WELL,
 many people consider shapeless as a tool a library  to use to construct other libraries
@@ -639,6 +766,9 @@ And here is one example I was very confused about long time ago
 and I felt like I need to use shapeless
 
 
+I don't think that HList and Coproducts should be used to model entire domain - well it can
+but from my perspective you should always choose the minimal abstraction - as premature optimizations are a root of all evel as we all know
+
 
 i want to pay your attent to the very minimalistic usage of shapeless api - and its usually like that
 
@@ -646,16 +776,9 @@ this is what makes shapeless neat and elegant
 and this small thing enables generality
 and makes scala so versatily
 
----
-
-# Monoid typeclass derivation
-
-Just to tell you a few words more about what you can actually do with all of this
-
-
-
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+
 
 # Conclusion
 
@@ -675,24 +798,31 @@ in fact - Practical usage shoudl always be very concise - that makes such librar
 
  end: Well, scala exposes really great possibility of combining type-dependent with less-type safe mutable 
 
----
 <!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: Links
 
 # Links
 
-- type astronaut guide to shapeless
 - 
+- type astronaut guide to shapeless
 
+???
 
+you may wonder - what are those astronauts pictures scattered across the entire presentation - well thats because of that awesome small book - and actually the whole presentation was inspired by that
 
+---
 
+# Thanks
 
+- @twist522
+- <a>blog.codefastdieyoung.xyz</a>
+- <a>github.com/thatwist</a>
+- <a>crossroadlabs.xyz</a>
 
+???
 
-
-
-
-
+So please follow me on whatever blablabla thanks for coming
 
 
 
@@ -701,7 +831,9 @@ in fact - Practical usage shoudl always be very concise - that makes such librar
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
     </script>
     <script>
-      var slideshow = remark.create();
+      var slideshow = remark.create({
+        highlightLines: true
+      });
     </script>
   </body>
 </html>
