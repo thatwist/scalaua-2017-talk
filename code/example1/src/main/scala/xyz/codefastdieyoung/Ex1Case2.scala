@@ -22,16 +22,11 @@ object Ex1Case2 {
     implicit val longToString: ToString[Long] = (a: Long) => a.toString
 
     implicit def listToString[A: ToString]: ToString[List[A]] = (a: List[A]) => a.map(_.asString).mkString("[", ", ", "]")
-
-    /* go to slides - show Hlist */
-    /* generic is exaclty for that purpose */
-
-    implicit def genericToString[T: Generic]: ToString[Generic[T]]
   }
 
   import ToString._
 
-  println(User(1L, "asd", "asd", Nil).asString)
+  // println(User(1L, "asd", "asd", Nil).asString)
 
   // the[ToString[Long]]
 

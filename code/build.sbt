@@ -4,7 +4,8 @@ lazy val commonSettings = Seq(
   organization := "xyz.codefastdieyoung",
   version := "1.0",
   scalaVersion := "2.12.1",
-  scalaOrganization := "org.typelevel"
+  scalaOrganization := "org.typelevel",
+  scalacOptions ++= Seq("-Yliteral-types", "-Ykind-polymorphism", "-Yinduction-heuristics")
 )
 
 lazy val dependencies = Seq(

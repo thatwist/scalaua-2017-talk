@@ -4,8 +4,11 @@ import shapeless.{HList, LabelledGeneric}
 import cats.Monoid
 import shapeless.ops.hlist.{Align, Diff, Intersection, Prepend}
 
+import scala.annotation.inductive
+
 object Example3 extends App {
 
+  @inductive
   trait Migration[A, B] {
     def apply(a: A): B
   }
@@ -22,8 +25,7 @@ object Example3 extends App {
       Intersection <: HList,
       Difference <: HList,
       Concatenated <: HList](
-      implicit
-      aGeneric: LabelledGeneric.Aux[A, ReprA],
+      implicit aGeneric: LabelledGeneric.Aux[A, ReprA],
       bGeneric: LabelledGeneric.Aux[B, ReprB],
       intersection: Intersection.Aux[ReprA, ReprB, Intersection],
       diff: Diff.Aux[ReprB, Intersection, Difference],

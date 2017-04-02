@@ -1,6 +1,6 @@
 package xyz.codefastdieyoung
 
-object Ex2Case4 {
+object Ex2Second {
   import shapeless._
 
   trait Second[H <: HList] {

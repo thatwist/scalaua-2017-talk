@@ -1,7 +1,10 @@
 package xyz.codefastdieyoung
 
+import scala.annotation.inductive
+
 object Ex1Case3 extends App {
 
+  @inductive
   trait ToString[A] {
     def apply(a: A): String
   }
@@ -20,11 +23,7 @@ object Ex1Case3 extends App {
 
     implicit def listToString[A](implicit aToString: ToString[A]): ToString[List[A]] = (a: List[A]) => a.map(_.asString).mkString("[", ", ", "]")
 
-    implicit def userToString(implicit
-      intToString: ToString[Long],
-      strToString: ToString[String],
-      listToString: ToString[List[String]]
-    ): ToString[User] = (user: User) => s"User id${user.id.asString}, name=${user.name.asString}"
+    implicit val userToString: ToString[User] = (user: User) => s"User id${user.id.asString}, name=${user.name.asString}"
   }
 
   import ToString._

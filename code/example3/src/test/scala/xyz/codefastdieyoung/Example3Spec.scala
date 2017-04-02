@@ -12,6 +12,7 @@ class Example3Spec extends FlatSpec {
     import MonoidHListInstances._
     import Migration._
 
+
     val migrated = User(1L, "name1", "email@com", List("2")).migrateTo[Employee]
 
     assert(migrated === Employee(1L, "", "email@com", 0L))
