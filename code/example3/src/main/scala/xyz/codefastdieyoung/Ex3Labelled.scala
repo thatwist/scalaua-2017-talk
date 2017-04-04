@@ -15,12 +15,12 @@ object Ex3Labelled extends App {
       ("name" ->> "Josh") ::
       ("active" ->> true) ::
       ("role" ->> "admin") :: HNil
-
-  val i: Witness.`42`.T = 42.narrow
-
-  val i42: 42 = 42
-
-  val k: 41 = 41
+//
+//  val i: Witness.`42`.T = 42.narrow
+//
+//  val i42: 42 = 42
+//
+//  val k: 41 = 41
 
   // type nameT = Witness.`'name`.T
 

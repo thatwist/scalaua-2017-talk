@@ -28,7 +28,7 @@ object Ex1Case3 extends App {
 
   import ToString._
 
-  println(User(1L, "asd", "asd", Nil).asString)
+  println(User(1L, "asd", true).asString)
 
   import shapeless._
 

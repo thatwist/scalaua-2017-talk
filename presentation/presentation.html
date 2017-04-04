@@ -69,21 +69,40 @@
       .background-cover {
         background-size: cover;
       }
+      .remark-code-line-highlighted {
+        background-color: royalblue;
+      }
       /*****************************************************************************************************************/
       /*************************************   Slide-specific styling   ************************************************/
       /*****************************************************************************************************************/
       #slide-title {
         background-image: url(resources/space-skater.png);
-        background-position-y: -160px;
+        background-position-y: -9em;
         background-color: black;
       }
-
+      #slide-problem-csv h1 {
+        font-size: 5em;
+        margin-top: -1em;
+        line-height: 2em;
+      }
+      .bigger-middle-code code {
+        min-height: 100px;
+        vertical-align: middle;
+        line-height: 100px;
+        font-size: 1.3em;
+      }
       #slide-title h1 {
         font-size: 3.5em;
         font-weight: bolder;
-        letter-spacing: 7px;
+        letter-spacing: 6px;
         line-height: 1.2;
         padding-bottom: 20px;
+      }
+      #slide-scared {
+        background-size: contain;
+      }
+      #model-domain .left-column {
+        /*min-width: 102px;*/
       }
       .live-code1 {
         color: #f3f3f3;
@@ -104,14 +123,14 @@
         margin-bottom: 30px; 
       }
       #slide-type-class {
-        background-image: url(resources/half-moon.jpg);
+        background-image: url(resources/f-astro-lying.jpg);
         background-color: black;
-        background-size: contain;
+        background-size: cover;
       }
       #slide-type-class h1 {
         font-size: 3.5em;
         font-weight: bolder;
-        letter-spacing: 7px;
+        letter-spacing: 6px;
         line-height: 1.2;
         padding-bottom: 20px;
       }
@@ -120,6 +139,20 @@
         background-position-y: 30px;
         background-color: black;
         font-size: 1.5em;
+      }
+      #slide-debugging-alt {
+        background-image: url(resources/f-astro-wc.jpg);
+        background-size: cover;
+        font-weight: bolder;
+        text-shadow: 10 10 20px #000;
+        font-size: 1.5em;
+        /*-webkit-text-stroke-width: 3px;
+        -webkit-text-stroke-color: #000;*/
+      }
+      #slide-debugging-alt h1 {
+        margin-top: 0em;
+        max-width: 5em;
+        line-height: 1.5em;
       }
       #slide-chill-out1 {
         background-position-x: 10%;
@@ -176,6 +209,40 @@
         width: 75%;
         float: right;
         padding-top: 1em;
+      }
+      /*****************************************************************************************************************/
+      /*********************************************   ADTs table   ****************************************************/
+      /*****************************************************************************************************************/
+      
+      #adts-table {
+        width: 600px;
+        margin-top: 25px;
+      }
+      #adts-left, #adts-right {
+        margin-bottom: 25px;
+      }
+      #adts-left {
+        float: left;
+        width:298px;
+        border-right: 2px solid black;
+      }
+      #adts-right {
+        float: right;
+        width: 300px;
+      }
+      .adts-header, .adts-cell {
+        padding-left: 30px;
+      }
+      .adts-header {
+        border-bottom: 2px solid black;
+        border-top: 2px solid black;
+        padding-bottom: 10px;
+      }
+      .adts-header > h3 {
+        margin-top: 0px;
+      }
+      #adts-left h4:last-of-type, #adts-right h4:last-of-type {
+        margin-bottom: 15px;
       }
     </style>
     <!-- <style>
@@ -252,6 +319,7 @@ def toCSV(u: User) = s"${u.id},{u.name},{u.role}"
 
 ```terminal
 scala> toCSV(User(1L, "test"))
+
 res1: String = 1,test
 ```
 
@@ -296,7 +364,7 @@ Common apporaches to such problems are using either
 
 ---
 name: problem-csv
-class: center, middle
+class: center, middle, bigger-middle-code
 layout: false
 
 # Problem
@@ -322,7 +390,7 @@ basically being able to define such generic function without writing much boiler
 name: scared
 count: false
 class: center, middle
-background-image: url(resources/falling-astro.png)
+background-image: url(resources/f-astro-brick1.png)
 
 ???
 
@@ -330,6 +398,12 @@ background-image: url(resources/falling-astro.png)
 
 Well, this very first slide is somewhat ?correspond? to what I felt when started with Shapeless
 Moving in the dark space - I used some of the functionality provided but I felt like totally miss the whole point
+== Well I was able to do all kinds of dirty things with tuples - like merging them together, or substracting
+but I was like - 'Man, you miss the whole point', and then when I looked into shapeless codebase - I wanted to decide on suicide
+like this poor guy
+
+well its not that plain - but there are certain technics which if your are not aware of - make you feel very confused and dumb
+
 But then I realized there is nothing super-special there, it's not a magic.
 
 But I was very impressed by the beaty and elegence of this library at the same time
@@ -349,12 +423,14 @@ class: left
 # Agenda
 
 * #### Intro
-* #### Being Generic
 * #### ADTs everywhere
 * #### Products & Coproducts
+* #### Being Generic
 * #### Type Classes FTW
 * #### Derivation
-* #### Live coding..
+* #### `[live-code]`
+* #### Capturing field names
+* #### `[live-code]`
 
 ???
 
@@ -363,42 +439,16 @@ The idea of derivation is used in many libraries and itself it is considered som
 
 // The level of a talk would be around middle scala-dev who just started to investigate shapeless library or at least have strong understanding what implicits in scala do and is aware of basic capabilities of a type system in scala.
  -->
+ But once you get familiar with technics and approaches - you start seeing use cases everywhere
 
-1. Introduction
-2. ADTs -> HList
-3. Generic programming
-4. Type Class pattern
-5. Live coding
 
-I will try to explain some of the basics and kind-of extend understanding of the ADT types and have a look at them from somewhat different perspective
+First of all we will try to go through some basics and kind-of try to look at the ADT types and have a look at them from somewhat different,higher perspective
 and then we will try to do some livecoding and will take a look at some of the aries of application of those patterns - basically where we can use it what is value?
 
 I hope I will bring you some useful and some understanding of the core concepts and possibilities type-driven development can bring you in scala.
 
-quick agenda
-  - ADTs from the generalized perspective
-  - Generic programming concept
-  - HList concept
-  - Type-class pattern
-  - Generic derivation
-  --
-  - Generic programming concept
-  - Quick overview of what HList is and how it is implemented in Shapeless library
-  - Type-class pattern overiview in scala
-  - ADTs and Generic representation for products and coproducts in Shapeless
-  - Livecoding - 
-  - AUX pattern
-  - Livecoding
-  - shapeless.Lazy
-  - Aux type pattern in shapeless
-  - Debugging implicits resolution
-  - Dependent-type concept
-  - type tagging, Labelled Generic
-  - some more real-life use-cases of Shapeless
-
-
-To understand what I'm talking about you should have at least a basic understanding of implicits in scala
-Without that knowledge this talk probably will not make a lot of sense for you
+<li><h2> To understand what I'm talking about you should have at least a basic understanding of implicits in scala
+Without that knowledge this talk probably will not make a lot of sense to you
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
@@ -418,14 +468,15 @@ How do we model our domain in scala? What are the basic instruments we usually u
 
 ---
 count: false
+name: model-domain
 # How do we model our domain?
 
 .left-column[
-  ### case class /    sealed trait
+  ### case class / sealed trait
 ]
-
- - #### case class
- - #### sealed trait
+.right-column[
+- #### case class
+- #### sealed trait
 
 ```scala
 case class User(id: Long, name: String,
@@ -436,6 +487,7 @@ sealed trait Role
 case class Admin(id: Long, special: Boolean)
 case class Client(id: Long)
 ```
+]
 
 ???
 They are really nice and declarative - they are concise - there is no boilerplate as in Java
@@ -459,7 +511,7 @@ count: false
 
 .right-column[
 
-- #### case class TupleN[...] extends Product
+- #### TupleN[...] extends Product
 - #### scala.Either / cats.Xor / scalaz.\/
 
 ```scala
@@ -524,24 +576,32 @@ name: adts
 layout: false
 class: left
 
-# ADT
+## ADT .red.bold[*]
 
-## Stands for Algebraic Data types
+<div id="adts-table">
+    <div id="adts-left">
+        <div class="adts-header"><h3><strong>AND</strong> types</h3></div>
+        <div class="adts-cell"><h4>case class</h4></div>
+        <div class="adts-cell"><h4>Tuple     </h4></div>
+        <div class="adts-cell"><h4>HList     </h4></div>
+    </div>
+    <div id="adts-right">
+        <div class="adts-header"><h3><strong>OR</strong> types</h3></div>
+        <div class="adts-cell"><h4>sealed trait</h4></div>
+        <div class="adts-cell"><h4>Either      </h4></div>
+        <div class="adts-cell"><h4>Coproduct   </h4></div>
+    </div>
+</div>
 
- | --- | --- |
- | Logical _AND_ types |  Logical _OR_ types |
- | --- | --- |
- | case class | sealed trait |
- | --- | --- |
- | Tuple | Either |
- | --- | --- |
- | HList | Coproduct |
- | --- | --- |
+```scala
+case class User(id: Long, name: String, active: Boolean, role: Role)
 
-Product types
-case class / Product / HList        =>     Logical And
+sealed trait Role
+case class Admin(id: Long, special: Boolean)
+case class Client(id: Long)
+```
 
-sealed trait / Either / Copoduct    =>     Logical Or
+.footnote[.red.bold[*] Stands for Algebraic Data Type]
 
 ???
 
@@ -579,14 +639,52 @@ Well we will see later
 ---
 name: hlist
 
-# ~~Product~~ HList
+<h1>HList</h1>
+<!-- <h1><span style="color: #DDD">Product</span> HList</h1> -->
+
+```scala
+val hlist = 1 :: "one" :: 1L :: HNil
+// res0: shapeless.::[
+//          Int,shapeless.::[
+//              String,shapeless.::[Double,
+//                  shapeless.HNil
+//              ]
+//          ]
+//      ] = 1 :: "one" :: 1L :: HNil
+
+hlist.head // Int
+hlist.tail.head // String
+hlist.tail.tail.head // Long
+```
+---
+count: false
+template: hlist
+
+### HList Definition:
 
 ```scala
 sealed trait HList
 
-case class ::[H, T <: HList] extends HList // HCons
+case class ::[H, T <: HList](head : H, tail : T) extends HList // HCons
 
 case object HNil extends HList
+```
+
+???
+>
+
+---
+count: false
+template: hlist
+
+### List Definition:
+
+```scala
+sealed trait List[+A]
+
+case class ::[A](head: A, tail: List[A]) extends List[A]
+
+case object Nil extends List[Nothing]
 ```
 
 ???
@@ -613,10 +711,8 @@ or any other language - the plus of scala is that it allows infix type syntax wh
 
 <starts from>
 So the instance of HList basically looks like this: (probably most of you saw):
-1 :: "1" :: 1L ::    // Int :: String :: String :: HNil
-val h = "scalaua" :: "is" :: ""
 
-And you can all kinds of dirty things with that
+And you can do all kinds of dirty things with that
 
 The form it is written here - is using infix syntax which makes them really nice to work with in scala
 and it looks very similar to regular scala List builder
@@ -666,83 +762,128 @@ Unlike HNil - CNil doesn't convey any information - so this achieved through not
 >
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
-name: generic
+name: generic1
+class: inverse, middle, center
+count: false
 
 # Generic
 
-And the core abstraction which enables it in shapeless is something called Generic
+---
+name: generic2
+
+# Generic
+
+```scala
+import shapeless.Generic
+
+case class User(id: Long, name: String, active: Boolean)
+
+val generic = Generic[User]
+
+// res0: shapeless.Generic[User]{type Repr = shapeless.::[Long,
+//  shapeless.::[String,
+//      shapeless.::[Boolean,
+//          shapeless.HNil
+//      ]
+//  ]
+//]}
+```
 
 ---
 count: false
-
-whatever you do generic you do generic programming
-its just a matter of property you want to abstract out
-
-
-ok we will look at Generic more precisely a little bit more later
-
-<!-- ------------------------------------------------------------------------------------------------------------ -->
----
-count: false
-
-name: generic-shape
-
-.footnote[.red.bold[*] Important footnote]
+name: generic3
 
 # Generic
 
 ```scala
 trait Generic[A] {
-* type Repr
+
+  type Repr
+
   def to(value: A): Repr
+
   def from(value: Repr): A
 }
 ```
 
---
-count: false
-
-show in IDE compilated example - 
-
-switching representations
-
 ---
 count: false
+name: generic3
 
-And what shapeless does is basically providing an instruments to work with ADTs in a generic way
-provides us a possibility to abstract over arity (number of arguments)
-and write functions like toCSV in a more generic fasion
+# Generic
 
-There are a couple of other minor items/possiblities in the library 
-but the main one - is to asbtract over arity
 
+```scala
+import shapeless.Generic
+
+case class User(id: Long, name: String, active: Boolean)
+
+val generic = Generic[User]
+// res0: shapeless.Generic[User]{type Repr = shapeless.::[Long,
+//  shapeless.::[String,
+//      shapeless.::[Boolean,
+//          shapeless.HNil
+//      ]
+//  ]
+//]}
+
+val user = User(1L, "Josh", true)
+
+val genericUser = generic.to(user)
+// genericUser: generic.Repr = 1 :: Josh :: true :: HNil
+
+generic.from(repr)
+// res1: User = User(1,Josh,true)
+```
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
----
-exclude: true
-name: generic-programming
 
+???
+
+And the core abstraction which enables it in shapeless is something called Generic
 
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
 name: type-class
-class: top, white-text
+class: top, white-text, right
 count: false
 
 # Type Class
 
+???
+
+Well, as you can see - an astronaut is a little bit overwhelmed here
+but thats understandable, well..
 ---
 
 # Type Class pattern
 
 ```scala
-trait CSVEncoder[A] {
+trait CSVSerializer[A] {
+
   def apply(a: A): String
 }
 ```
 
 ???
+
+This is vere functional type of polymorphism
+instead of overloading in OO style
+
+if you just recently switched from Java then think about Comparable and you will understand typeclasses
+
+The essential parts of typeclass pattern are
+
+- parameterized interface
+- instances for concretized types (implicits) - usually put in companion object
+- implicit parameter - type boud / context bound
+
+When you see this huge deifinition - start from looking for some abstract parameterized interface with one or few methods
+this is a way to distinguish a typeclass pattern
+All these stuff enclosed in companion object
+Why in companion object you may ask - because it is the scope where compiler will search for implicits without special imports
+
 
 The essential parts of type-class definition are:
 
@@ -758,13 +899,13 @@ the very functional type of polymorphism - when we extend functionality of some 
 on the contrary of inheritance in OOP polymorphism
 implicit class on steroids - what if you need to provide different implementations depending on some polymorphic type?
 lets look at the following:
-trait Encoder[A] {
-  def encode(a: A): String
+trait CSVSerializer[A] {
+  def serialize(a: A): String
 }
 as you can see there is no implicits or anything scary here - it just very abstract definition of some functionality
 you capture very basic functionality into interface
 
-then lets define some instances - lets say we need to encode Int
+then lets define some instances - lets say we need to serialize Int
 
 Type classes are all over the place
 The most familiar to everybody should be Ordering
@@ -796,12 +937,12 @@ count: false
 # Type Class pattern
 
 ```scala
-object Encoder {
+object CSVSerializer {
 
-  def apply[A](implicit encoder: Encoder[A]): Encoder[A] = encoder
+  def apply[A](implicit serializer: CSVSerializer[A]): CSVSerializer[A] = serializer
 
   implicit class WithEncode[A](a: A) {
-    def encode(implicit encoder: Encoder[A]) = encoder.encode(a)
+    def serialize(implicit serializer: CSVSerializer[A]) = serializer.serialize(a)
   }
 }
 ```
@@ -822,8 +963,8 @@ name: simulacram
 # https://github.com/mpilquist/simulacrum
 
 ```scala
-@typeclass trait Encoder[A] {
-  @op("§") def encode(a: A): String
+@typeclass trait CSVSerializer[A] {
+  @op("§") def serialize(a: A): String
 }
 ```
 
@@ -843,30 +984,33 @@ I bet there is probably some PR for that already
 Really nice way for expressing
 although it's obvious that this is just a workaround and kind-of temporary solution until real first-class support will be added. I believe
 
-<!-- ------------------------------------------------------------------------------------------------------------ -->
----
-name: generic
-layout: true
-count: false
 
-# Generic
-
----
+--
 count: false
-name: generic-repr
 
 ```scala
-trait Generic[A] {
-  type Repr
-  def to(value: A): Repr
-  def from(value: Repr): A
+trait CSVSerializer[A] {
+  def serialize(x: A, y: A): A
 }
-```
 
-# Example:
+object CSVSerializer {
+  def apply[A](implicit instance: CSVSerializer[A]): CSVSerializer[A] = instance
 
-```scala
-// TODO
+  trait Ops[A] {
+    def typeClassInstance: CSVSerializer[A]
+    def self: A
+    def §(y: A): A = typeClassInstance.append(self, y)
+  }
+
+  trait ToCSVSerializerOps {
+    implicit def toCSVSerializerOps[A](target: A)(implicit tc: CSVSerializer[A]): Ops[A] = new Ops[A] {
+      val self = target
+      val typeClassInstance = tc
+    }
+  }
+  object nonInheritedOps extends ToCSVSerializerOps
+
+  ...
 ```
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
@@ -876,7 +1020,9 @@ name: live-code1
 class: white-text, live-code1
 count: false
 
-# [live-coding]
+# deriving serializer
+
+[live-code]
 
 ???
 
@@ -898,20 +1044,49 @@ name: aux
 
 # Aux Pattern
 
-Aux https://youtu.be/GKIfu1WtSz4?t=1125
+```scala
 
-For instnace we want this type to be a part of
+scala> trait Foo { type T }
+// defined trait Foo
 
-so we can reuse it later in a dependent-type way
+scala> def f(foo: Foo, t: foo.T) = ???
 
-<--provide better use-case >
+* <console>:13: error: illegal dependent method type: parameter may only be
+*                              referenced in a subsequent parameter section
+*       def f(foo: Foo, t: foo.T) = ???
+             ^
+scala>
+```
+
+--
+count: false
+
+## Solution:
 
 ```scala
-trait Foo[B] {
-  type B
-  def bar(a: A): Boolean
-}
-  def foo[T](t: T)(implicit f: Foo[T], m: Monoid[f.B]): f.B = m.zero
+scala> trait Foo { type T }
+// defined trait Foo
+
+scala> type Aux[T0] = Foo { type T = T0 }
+// defined type alias Aux
+
+scala> def f[T](foo: Aux[T], t: T) = ???
+// f: [T](foo: Aux[T], t: T)Nothing
+
+```
+
+???
+
+The reason of existence of this pattern is rather simple but you might be confused if you don't know about it
+and just seeing Aux all over the place
+
+---
+name: aux1
+
+# Aux Pattern
+
+```scala
+  type Aux[T, Repr0] = Generic[T] { type Repr = Repr0 }
 ```
 
 ???
@@ -919,8 +1094,8 @@ trait Foo[B] {
 <livecode>
 
 Aux pattern is something which comes naturally from constrains
-but if you are not familiar with it - and you don't follow the way that the author of the code has been following while - you can't understand the reason
 
+The rule of thumb is - 
 Whenever you need to summon instance with dependent type like `Foo[???] { type B = ??? }`
 you need to use type alias -> Aux pattern
 
@@ -946,21 +1121,103 @@ Once you understand how to use those technics with HList - there is nothing spec
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
-name: lazy
+name: divergence
 
-# Lazy
+# Implicit divergence
 
-implicit divergence
-
-tree--like structure
+### nested structure
 
 ```scala
-// TODO
+case class Account(id: Long, user: User)
+case class User(id: Long, name: String, active: Boolean)
+```
+
+```scala
+  /*1*/ CSVSerializer[Account]
+  /*2*/ CSVSerializer[::[Long, ::[User, HNil]]]
+  /*3*/ CSVSerializer[::[User, HNil]]
+  /*4*/ CSVSerializer[User]
+* /*5*/ CSVSerializer[::[Long, ::[Sting, ::[Boolean, HNil]]]] // failed
+
+// diverging implicit expansion for type xyz.codefastdieyoung
+//        .CSVSerializer[Long :: String :: Boolean :: shapeless.HNil]
+```
+
+the compiler sees the same type constructor twice and 
+      the complexity of the type parameters is _increasing_...
+
+---
+count: false
+name: lazy
+
+# Lazy!
+
+```scala
+  import shapeless.Lazy
+
+  implicit def HConsEncoder[H, T <: HList](implicit
+*   hEncoder: Lazy[Encoder[H]],
+    tailEncoder: Encoder[T]
+  ): Encoder[H :: T] = { t =>
+    s"${hEncoder(t.head)}, ${tailEncoder(t.tail)}"
+  }
+```
+
+wrap diverging implicit parameter...
+
+???
+
+Lazy to the rescue
+
+---
+name: shapeless
+class: white-text
+background-image: url(resources/f-astro-shapeless.jpg)
+
+# shapeless
+
+???
+
+So, this is what derivation means - 
+using type-classes we are able to derive instances for composite type while having instances for
+
+And what shapeless does is basically providing an instruments to work with ADTs in a generic way
+provides us a possibility to abstract over arity (number of arguments)
+and write functions like toCSV in a more generic fasion
+
+There are a couple of other minor items/possiblities in the library 
+but the main one - is to asbtract over arity
+
+---
+count: false
+layout: false
+name: generic-programming
+class: bigger-middle-code
+exclude: false
+
+# Generic programming
+
+```scala
+def fmap[A](f: A => B): F[B] = ???
 ```
 
 ???
 
-<livecode>
+At this point we can give some definition to what generic programming is
+and speaking very simple - whenever you use generics you do Generic programming
+and that means you do a kind of programming when you write algorithms in terms of not-yet defined types
+
+In such ways we are generalizing over common properties of types and functions
+However In some cases it's easier to abstract over particular property - like type of the field of the User class
+in other cases - it's harder like arity - 
+
+<!-- .......
+concretising too early - lean software development methodologies - make a decisions as late as possible
+ -->
+
+one of those techincs - is type definition
+very simple at first - it enables a lot more sophisticated in connection with implicits
+
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
@@ -974,6 +1231,13 @@ count: false
 
 - once you have a lot of nested fields - its a problem - compiler will end up with non-descriptive messages ...
 - implicitly / reify
+
+---
+name: debugging-alt
+class: white-text, background-cover
+count: false
+
+# Debugging implicits
 
 ---
 
@@ -1006,13 +1270,15 @@ class: bottom, center, background-cover
 
 # MY NOSE ITCHES
 
+<!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
 count: false
+layout: true
 
-what if we would encode Repr as type parameter rather than type member?
+# Generic
 
+### what if we would encode Repr as type parameter rather than type member?
 ---
-count: false
 
 ```scala
 trait Generic[A, Repr] {
@@ -1020,15 +1286,10 @@ trait Generic[A, Repr] {
   def from(value: Repr): A
 }
 ```
-then we can't reuse it in some other context
 
-<!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+count: false
 name: generic-shape
-
-.footnote[.red.bold[*] Important footnote]
-
-# Generic
 
 ```scala
 trait Generic[A] {
@@ -1038,64 +1299,21 @@ trait Generic[A] {
 }
 ```
 
+then we can't reuse it in some other context
+
 ???
 
 This is what enables
 And enables us to derive type-class instances for arbitrary case-classes
 
----
-class: live-code1
-count: false
-
-# [switching representations]
-
----
-count: false
-name: generic-programming
-
-# Generic programming
-
-</br>
-<center>
-```scala
-\************************************************************************\
-
-
-
-
-def fmap[A](f: A => B): F[B] = ???
-
-
-
-
-\************************************************************************\
-```
-
-???
-
-At this point we can give some definition to what generic programming is
-and speaking very simple - whenever you use generics you do Generic programming
-and that means you do a kind of programming when you write algorithms in terms of not-yet defined types
-
-In such ways we are generalizing over common properties of types and functions
-However In some cases it's easier to abstract over particular property - like type of the field of the User class
-in other cases - it's harder like arity - 
-
-<!-- .......
-concretising too early - lean software development methodologies - make a decisions as late as possible
- -->
-
-one of those techincs - is type definition
-very simple at first - it enables a lot more sophisticated in connection with implicits
-
-
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
 count: false
 class: live-code1
+layout: false
 
-# Product Last
-[live code]
+# product Last
+[live-code]
 
 ???
 
@@ -1175,9 +1393,9 @@ count: false
 
 # Dependent types
 
-- type members
-- implicit resolution
-- neat syntax enabled by implicits
+### type members
+### implicit resolution
+### neat syntax
 <!-- - neat syntax enabled by implicit's sugar -->
 
 ???
@@ -1189,7 +1407,7 @@ todo
 ---
 name: dep-fns
 
-# Dependent typed functions
+# Dependently typed functions
 
 We've already seen a Last, Init type classes (or something else)
 Lets think about application of them and remind classic scala function definitions
@@ -1227,7 +1445,7 @@ template: dep-fns
   }
 ```
 
-## Now its possible to have one function __DEPEND__ on other
+## Now its possible to have one function __DEPEND__ on other during implicit resolution
 
 ???
 
@@ -1604,8 +1822,8 @@ class: live-code1
 name: live-code-migration
 count: false
 
-# Case class migrations
-[live code]
+# case class migrations
+[live-code]
 
 ???
 
@@ -1658,26 +1876,6 @@ We've already seen a derivation for
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
-
-# Issues
-
-* ## Compilation Times
-  ** 
-  ** 
-* ## inductive implicits
-   * ### typelevel fork 2.11+
-   * ### `-Yinduction-heuristics`
-* ## runtime overhead
-* ## ...
-
----
-exclude: true
-count: false
-# typesafe scala 2.12
-
-
-<!-- ------------------------------------------------------------------------------------------------------------ -->
----
 name: real-life
 background-image: url(resources/back-to-earth.jpg)
 class: top, white-text, background-cover
@@ -1711,11 +1909,43 @@ and makes scala so versatily
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
 
+# Issues
+
+* ## Compilation Times
+  ** 
+  ** 
+* ## inductive implicits
+   * ### typelevel fork 2.11+
+   * ### `-Yinduction-heuristics`
+* ## runtime overhead
+* ## ...
+
+---
+exclude: true
+count: false
+# typesafe scala 2.12
+
+<!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+name: conclusion
+background-image: url(resources/f-astro-car.jpg)
+class: white-text
+count: false
+
 # Conclusion
 
-# ??
-
 ???
+
+- todo
+- always choose a minimal abstraction needed
+- So HLists and Coproducts are good for certain things especially for building rich api 
+but they might not be that good as a main building blocks for your applications
+-- Here we can reference some of the core principles of lean methodologies
+  choose minimal abstraction
+  be driven by domain
+  preliminary optimizations/generalizations as they are a root of all evil
+they are not
+
 
 Again - HList/Coproduc - are not an alternative wayof modelling your domain
 They are extremely powerful representations of your ADTs that you can use to perform very tricky things at compile time
@@ -1768,25 +1998,12 @@ background-image: url(resources/astronauts-guide.png)
 you may wonder - what are those astronaut's pictures scattered across the entire presentation - well thats because of that awesome small book by Dave Gurnell - and actually this whole presentation was totally inspired by it
 you can find it on shapeless github - and you can order 
 
----
-# Summary
-
-- todo
-- always choose a minimal abstraction needed
-- So HLists and Coproducts are good for certain things especially for building rich api 
-but they might not be that good as a main building blocks for your applications
--- Here we can reference some of the core principles of lean methodologies
-  choose minimal abstraction
-  be driven by domain
-  preliminary optimizations/generalizations as they are a root of all evil
-they are not
-
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
 count: false
 name: chill-out1
 class: background-cover
-background-image: url(http://static2.fjcdn.com/comments/5283533+_304604d3e481caf3c8dba7111e3da75e.jpg)
+background-image: url(resources/astro-beer-no-label.jpg)
 
 ???
 Let your types do work for you - so you can just get back, have a ball and chill out
@@ -1797,10 +2014,12 @@ Like this
 count: false
 name: chill-out2
 class: background-cover
-background-image: url(https://pbs.twimg.com/media/C12NtAdXAAA8zUP.jpg)
+background-image: url(resources/astro-bong.jpg)
 
 ???
-Or maybe.. like this  <FUN>
+Or maybe.. like this 
+<p><strong>FUN></strong>
+..Whatever you prefer)
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
@@ -1854,6 +2073,17 @@ template: chill-out1
         return x.replace(/<(\/?(\w+).*?)>/g, '<$1>')
       });
     </script>
-
+    //
+    <script>
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-28956594-3']);
+      _gaq.push(['_trackPageview']);
+      (function() {
+        var ga = document.createElement('script');
+        ga.src = 'https://ssl.google-analytics.com/ga.js';
+        var s = document.scripts[0];
+        s.parentNode.insertBefore(ga, s);
+      }());
+    </script>
   </body>
 </html>

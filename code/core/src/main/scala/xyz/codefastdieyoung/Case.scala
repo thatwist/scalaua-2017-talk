@@ -3,14 +3,13 @@ package xyz.codefastdieyoung
 case class User(
   id: Long,
   name: String,
-  email: String,
-  roles: List[String]
+  active: Boolean
 )
 
-case class MinimalUser(
+case class RichUser(
   id: Long,
   name: String,
-  email: String
+  role: Role
 )
 
 case class Employee(
@@ -26,9 +25,7 @@ case class Role(
   name: String
 )
 
-case class RichUser(
+case class Account(
   id: Long,
-  name: String,
-  email: String,
-  role: Role
+  user: User
 )

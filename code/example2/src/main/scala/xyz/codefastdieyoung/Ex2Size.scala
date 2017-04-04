@@ -25,7 +25,7 @@ object Ex2Size extends App {
 
   println(Size((1, "1", true))) // == 3
 
-  println(Size(HNil)) // == 0
+//  println(Size(HNil)) // == 0
 
   println(Size(1 :: "1" :: true :: HNil)) // == 3
 

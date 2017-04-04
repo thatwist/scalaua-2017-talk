@@ -17,7 +17,7 @@ lazy val dependencies = Seq(
   )
 )
 
-lazy val core = project.in(file("core")).settings(commonSettings)
+lazy val core = project.in(file("core")).settings(commonSettings ++ dependencies)
 
 lazy val example1 = project.dependsOn(core)
   .settings(Seq(
@@ -43,4 +43,4 @@ lazy val root = (project in file("."))
   .aggregate(core, example1, example2, example3, example4)
   .settings(Seq(
     aggregate in compile := false
-  ) ++ commonSettings)
+  ) ++ commonSettings ++ dependencies)
