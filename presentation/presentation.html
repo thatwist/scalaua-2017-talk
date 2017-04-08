@@ -26,6 +26,7 @@
       }
       li p { line-height: 1.25em; }
       .red { color: #fa0000; }
+      .grey { color: #666; }
       .large { font-size: 2em; }
       /*a, a > code {
         color: rgb(249, 38, 114);
@@ -145,7 +146,7 @@
         font-size: 1.5em;
       }
       #slide-debugging-alt {
-        background-image: url(resources/f-astro-wc.jpg);
+        background-image: url(resources/astro-debug.jpg);
         background-size: cover;
         font-weight: bolder;
         text-shadow: 10 10 20px #000;
@@ -156,7 +157,15 @@
       #slide-debugging-alt h1 {
         margin-top: 0em;
         max-width: 5em;
-        line-height: 1.5em;
+        font-size: 3.5em;
+        max-width: 5em;
+        text-align: right;
+        position: absolute;
+        right: 50px;
+        font-weight: bolder;
+        letter-spacing: 6px;
+        line-height: 1.2;
+        padding-bottom: 20px;
       }
       #slide-chill-out1 {
         background-position-x: 10%;
@@ -273,12 +282,11 @@ class: center, bottom, white-text
 
 ???
 
-Ok, Lets get started
-(slightly smile smile smile)
+<p> Ok, Lets get started
 
-Hi everybody, thanks for coming here, and thanks scalaua cometee and Ruslan in particular for giving me a chance to be here
+<p> (slightly smile smile smile)
 
-Let's get started
+<p> Hi everybody, thanks for coming here, and thanks scalaua cometee and Ruslan in particular for giving me a chance to be here
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
@@ -290,10 +298,10 @@ layout: true
 
 ---
 
-### CSV/JSON/XML/Whatever
+### CSV/JSON/XML/...
 
 ```scala
-case class User(id: Long, name: String, role: String)
+case class User(id: Long, name: String, active: Boolean)
 
 ...
 
@@ -309,26 +317,32 @@ Whatever serialization - json/csv/xml - doesn't really matter.
 ---
 count: false
 
-### CSV/JSON/XML/Whatever
+### CSV/JSON/XML/...
 
 ```scala
-case class User(id: Long, name: String, role: String)
+case class User(id: Long, name: String, active: Boolean)
 
 ...
 
-def toCSV(u: User) = s"${u.id},{u.name},{u.role}"
+def toCSV(u: User) = s"${u.id},{u.name},{u.active}"
 ```
 
 ### Result:
 
 ```terminal
-scala> toCSV(User(1L, "test"))
+scala> toCSV(User(1L, "test", true))
 
-res1: String = 1,test
+res1: String = 1,test,true
 ```
 
 ???
 Well we could do it somehow like this (for CSV) - it is the most simple to think about csv as we don't need to think about field names, right?
+
+simply calling toString on all of the fields and separating ti by comma
+
+but that does not feel alright
+
+well, it doesn't make any sense to write things like that - this is very poor code
 
 ---
 count: false
@@ -356,15 +370,30 @@ res1: String = 1, test, 1, Wall str, 192, 1.0
 
 ???
 
-What about more complex case? 
-it quickly becomes a lot of boilerplate
+<p> What about more complex case? it quickly becomes a lot of boilerplate
 
-Usually we have a big and complex domain model
-Most of which we would like to be serialized automatically
-Common apporaches to such problems are using either
-- reflection
-- writing serialization explicitly
-- code-generation
+<p> Usually we have a big and complex domain model. Most of which we would like to be serialized automatically
+
+- Common apporaches to such problems are using either
+#### -- reflection
+#### -- writing serialization explicitly
+#### -- macro
+
+- Of course you could do macros for that and in fact most of the things we will be talking about today
+use macro under the hood one way or another
+<p> but using macro everytime we face such problem does not make a lot of sense
+<p> and it's not customizable enough - for instance if we want to partially serialize the original case class
+
+-- But agree with me - using macro introduces the whole new level of complexity
+-- its hard to compose and extend it
+
+- as for reflection - it is obviously not safe
+
+- Instead it would be great if we could have a layer of api we can rely on
+
+- .red[SO] we don't want to write serialization explicitly, we ant to be boilerplate free
+- we don't want to use reflection, we want to be typesafe
+- we want to do things easy and customizable, manipulating with some clear abstraction and API
 
 ---
 name: problem-csv
@@ -398,26 +427,29 @@ background-image: url(resources/f-astro-brick1.png)
 
 ???
 
-<AUDITORY> Is there anybody who has been scared when seen shapeless for the first time <raise your hand>? or maybe confused?
+.red.bold[AUDITORY] Is there anybody who has been scared when seen shapeless for the first time?
+.red.bold[raise your hand] or maybe confused?
 
-Well, this very first slide is somewhat ?correspond? to what I felt when started with Shapeless
-Moving in the dark space - I used some of the functionality provided but I felt like totally miss the whole point
-== Well I was able to do all kinds of dirty things with tuples - like merging them together, or substracting
-but I was like - 'Man, you miss the whole point', and then when I looked into shapeless codebase - I wanted to decide on suicide
+Well, this slide is somewhat ?correspond? to what I felt when started with Shapeless
+<!-- Moving in the dark space - I used some of the functionality provided but I felt like totally miss the whole point -->
+<!-- this can scare the shit out of you -->
+== Well I was able to do all kinds of dirty things with tuples - like merging them together, or subtracting
+but I was like - 'Man, you miss the whole point', and then
+  when I looked into shapeless codebase - that made me want to commit a suicide.
+  For real
 like this poor guy
 
-well its not that plain - but there are certain technics which if your are not aware of - make you feel very confused and dumb
+But then I realized there is nothing super-special there, it's not a magic. It's just plain scala code
+well its not that plain - but there are certain technics which if you are not aware of - make you feel very confused
 
-But then I realized there is nothing super-special there, it's not a magic.
+And I was very impressed by the beaty and elegence of this library at the same time
 
-But I was very impressed by the beaty and elegence of this library at the same time
+So if you feel confusion - then leave it - there is no magic in here - it is just a scala code
 
-So if you feel confusion - then leave it - there is no magic in here - it is just a plain scala code. Well not that plain
-albeit exploiting some of the interesting technics - some of them we will try to demistify today.
- <!-- we will try to demistify some of the core ?capabilities|? and som -->
+And we will try to to demistify today ome of the techniqes used in the library.
+
 This is not going to be an expert guide - I'm not an expert in it - I will just share with you a way to approach to understand the library
-Then you hopefully will feel yourself more comfortable with itbeing able to explore more advanced features
-
+Then hopefully you will feel more comfortable with it, being able to explore more advanced features
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
@@ -426,15 +458,12 @@ class: left
 
 # Agenda
 
-* #### Intro
-* #### ADTs everywhere
-* #### Products & Coproducts
-* #### Being Generic
-* #### Type Classes FTW
-* #### Derivation
+* #### Basics: ADTs, Products & Coproducts
+* #### Type Class pattern
+* #### Generic Derivation
 * #### `[live-code]`
-* #### Capturing field names
-* #### `[live-code]`
+* #### Lazy, Aux
+* #### Debugging
 
 ???
 
@@ -443,16 +472,27 @@ The idea of derivation is used in many libraries and itself it is considered som
 
 // The level of a talk would be around middle scala-dev who just started to investigate shapeless library or at least have strong understanding what implicits in scala do and is aware of basic capabilities of a type system in scala.
  -->
- But once you get familiar with technics and approaches - you start seeing use cases everywhere
-
-
-First of all we will try to go through some basics and kind-of try to look at the ADT types and have a look at them from somewhat different,higher perspective
-and then we will try to do some livecoding and will take a look at some of the aries of application of those patterns - basically where we can use it what is value?
-
-I hope I will bring you some useful and some understanding of the core concepts and possibilities type-driven development can bring you in scala.
-
+ <p>
+First of all we will to go through some basics and kind-of try to look at the ADT types and have a look at them from somewhat different,higher perspective
+<p>
+Then we will go through some basic definitions of What the HList and Coproduct are
+<p>
+And we will look at the generic representaions of ADTs
+<p>
+Then we will quickly go through type-class pattern and how can we encode it in Scala
+<p>
+And then we will try to do some livecoding covering some of the techniqes which are used in shapeless like Aux pattern and Lazy
+and we will leverage those for generic derivation examples
+- and will take a look at some of the aries of application of those patterns - basically where we can use it what is value?
+<p>
+<small>well I know you guys might not be familiar with a lot of words I've just used - but don't be confused we will go through all of it in a moment</small>
+<p>
+I hope I will bring to you some useful knowledge and some understanding of the core concepts and possibilities type-driven development can bring you in scala.
+<p>
 <li><h2> To understand what I'm talking about you should have at least a basic understanding of implicits in scala
 Without that knowledge this talk probably will not make a lot of sense to you
+
+<!-- But once you get familiar with technics and approaches - you start seeing use cases everywhere -->
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
@@ -468,7 +508,7 @@ class: center, middle, inverse
 
 In order to get there - lets start from the veryvery simple thing - 
 How do we model our domain in scala? What are the basic instruments we usually use to represent objects from the real-life?
-<wait for answer>
+<p> # .red.bold[auditory]
 
 ---
 count: false
@@ -488,19 +528,25 @@ case class User(id: Long, name: String,
 
 sealed trait Role
 
-case class Admin(id: Long, special: Boolean)
-case class Client(id: Long)
+case class Admin(id: Long, special: Boolean) extends Role
+case class Client(id: Long) extends Role
 ```
 ]
 
 ???
-They are really nice and declarative - they are concise - there is no boilerplate as in Java
+<p> Yes - thats easy - we use case classes to represent objects itself and theirs attributes and sealed traits to represent variance
+<p>They are really nice and declarative - they are concise - there is no boilerplate like with Java beans
+<p>
 What are the main problems with case classes? - They are very explicit - the name is bounded to representation
+<p>
 Its hard to compose them - it is really hard to extend them and it quickly becomes a lot of boilerplate (you can define common trait and stuff)
-
+<p>
+to deal with that we usually use some traits or we use composition - but it quickly becomes cumbersome and introdcues a lot of boilerplate
+<p>
 the problem with sealed is that it has a scope of one source file, its not that easy to create custom sealed families or extend existing ones
+<p>
 you can of course remove 'sealed' but then you loose the whole idea of being sealed
-
+<p>
 What are the other options? more generic?
 
 ---
@@ -519,22 +565,52 @@ count: false
 - #### scala.Either / cats.Xor / scalaz.\/
 
 ```scala
-type User = (Long, Sting, Boolean, Role)
+type User = (Long, String, Boolean, Role)
 
 
-type Role = Admin \/ Client
+type Role = Either[Admin, Client]
 type Admin = (Long, Boolean)
+type Client = Long
 ```
 ]
 
 ???
-Going a little bit further - 
-at this point we abstracted over types of the fields - those are encoded now into type parameters
-Now we can write generic functions parameterized by types of
+Going a little bit further - we could use tuples for certain things
+<p>
+at this point we abstracted over types of the fields - those are encoded now into the type parameters
+<p>
+Now we can write generic functions parameterized by types of the values contained in the tuple
+<p>
+we are ok with that, but we are not ok with the "size" of the data, we want to abstract over the size or .red.bold[arity] of the case/class/tuple
+<h2>WE WANT TO ABSTRACT OVER ARITY</h2>
+---
+count: false
 
-we are ok with that, but we are not ok with the "size" of the data, we want to abstract over the size of the case/class/tuple
+# How do we model our domain?
 
-we want to be able to abstract over 'size' or 'arity' of that - kind of - move that N into type parameter
+.left-column[
+  ### case class / sealed trait
+  ### TupleN / Either
+]
+
+.right-column[
+
+- #### Tuple.red.bold[N][...] extends Product
+- #### scala.Either / cats.Xor / scalaz.\/
+
+```scala
+type User = (Long, String, Boolean, Role)
+
+
+type Role = Either[Admin, Client]
+type Admin = (Long, Boolean)
+type Client = Long
+```
+]
+
+???
+
+and kind of - move that N into type parameter
 
 ---
 count: false
@@ -553,24 +629,26 @@ count: false
 - #### Coproduct
 
 ```scala
-type User = Long :: Sting :: Boolean :: Role :: HNil
+type User = Long :: String :: Boolean :: Role :: HNil
 
-type Role = Admin :+: Client
-type Admin = Long :+: Boolean :+: CNil
-type Client = Long :+: CNil
+type Role = Admin :+: Client :+: CNil
+
+type Admin = Long :: Boolean :: HNil
+type Client = Long :: HNil
 ```
 
 ```scala
+val admin: Role = Inl(2L :: true :: HNil)
 val sandy: User = 1 :: "Sandy" :: true :: admin :: HNil
-val admin: Role = Inr(2 :: HNil)
+// res5: User = 1 :: Sandy :: true :: Inl(2 :: true :: HNil) :: HNil
 ```
 ]
 
 ???
-here come heterogenous list and coproduct
-
+here comes heterogenous list and coproduct
+<p>
 as the most generic form we can get here
-
+<p>
 yeah, just a little bit later we will see what we can do with them
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
@@ -601,17 +679,27 @@ class: left
 case class User(id: Long, name: String, active: Boolean, role: Role)
 
 sealed trait Role
-case class Admin(id: Long, special: Boolean)
-case class Client(id: Long)
+case class Admin(id: Long, special: Boolean) extends Role
+case class Client(id: Long) extends Role
 ```
 
 .footnote[.red.bold[*] Stands for Algebraic Data Type]
 
 ???
 
-User is = id AND name AND active AND role
-Role is = Admin OR Client
-I think that should be pretty straightforward
+And all those things are called ADT
+<p>
+<p>and case class badically represents algebraic product or (carthesian product)
+<p>Yes, so this can be summarized - as case classes are logical AND types
+<p>and sealed traits are logical OR types
+
+<p>User is = id AND name AND active AND role
+<p>Role is = Admin OR Client
+<p>I think that should be pretty straightforward
+
+<p>.red[SO] the essential thing to remember here is that - HList - is generic representation for case class and Coproduct - is generalized Either which can contain arbitrary
+
+<p>
 
 <AUDIENCE> Is everybody clear with that?
 
@@ -643,14 +731,14 @@ Well we will see later
 ---
 name: hlist
 
-<h1>HList</h1>
+# HList
 <!-- <h1><span style="color: #DDD">Product</span> HList</h1> -->
 
 ```scala
 val hlist = 1 :: "one" :: 1L :: HNil
 // res0: shapeless.::[
 //          Int,shapeless.::[
-//              String,shapeless.::[Double,
+//              String,shapeless.::[Long,
 //                  shapeless.HNil
 //              ]
 //          ]
@@ -659,12 +747,40 @@ val hlist = 1 :: "one" :: 1L :: HNil
 hlist.head // Int
 hlist.tail.head // String
 hlist.tail.tail.head // Long
+
+val s = hlist.select[String] // returns "one".
+demo.select[List[Int]] // Compilation error. demo does not contain a List[Int]
+
 ```
+```scala
+take, head, tail, map, flatMap, zip
+```
+
+???
+
+So lets take more precise look at HLists
+<p>
+.red.bold[AUDITORY] Is anybody here who has never heard of HList?
+<small>if not - The HList is a kind of a list which can hold elements of different types and it holds type information about all of them</small>
+<p>
+So the instance of HList basically looks like this: (probably most of you've seen):
+<p>
+And you can do all kinds of dirty things with that
+<p>
+.red[AND] if you look at type - you can see it is just a nested structure
+<p>
+The form it is written here - is using infix syntax which makes them really nice to work with in scala
+BTW - in typelevel 2.12 fork of scala - the type output can be of the same form as value - written in infix style
+<p>
+and it looks very similar to regular scala List builder
+
 ---
 count: false
-template: hlist
+name: hlist-def
 
-### HList Definition:
+# HList
+
+### Definition:
 
 ```scala
 sealed trait HList
@@ -676,10 +792,36 @@ case object HNil extends HList
 
 ???
 >
+starts from the very simple idea of recursive types
+something beautiful about FP - the simpler idea is the better it composes
+
+This is a way to abstract over arity
+
+So this basically a type recursion
+and this is something you can see in a 
+btw in Typelevel scala 2.12 the annotation @showAsInfix was added which enables infix type printing in console
+(move below - after HList or when complex structure goes) going further for a minute - this is something which can help debugging
+
+naming Product <-> HList
+The idea behind HList is very very simple - .. recursive types
+The capabilities of type system in Java is enough to implement this - it will take you 20-30 lines
+or any other language - the plus of scala is that it allows infix type syntax which make possible following notation (A1 :: A2 :: … :: HNil)
+
+<trait definition>
+
+If we would deconstruct it into regular prefix form, it would look like:
+```scala
+val user =
+::(1L,
+  ::()
+)
+```
+
+So, the infix type constructing syntax enables this beautiful style, 
 
 ---
 count: false
-template: hlist
+template: hlist-def
 
 ### List Definition:
 
@@ -694,59 +836,12 @@ case object Nil extends List[Nothing]
 ???
 >
 
-So lets take more precise look at HLists
-
-<AUDITORY> Is anybody here who has never heard of HList?
-
-starts from the very simple idea of recursive types
-something beautiful about FP - the simpler idea is the better it composes
-
-This is a way to abstract over arity
-
-So this basically a type recursion
-and this is something you can see in a 
-btw in scala 2.12 the annotation @showAsInfix was added which enables infix type printing in console
-(move below - after HList or when complex structure goes) going further for a minute - this is something which can help debugging
-
-naming Product <-> HList
-The idea behind HList is very very simple - .. recursive types
-The capabilities of type system in Java is enough to implement this - it will take you 20-30 lines
-or any other language - the plus of scala is that it allows infix type syntax which make possible following notation (A1 :: A2 :: … :: HNil)
-
-<starts from>
-So the instance of HList basically looks like this: (probably most of you saw):
-
-And you can do all kinds of dirty things with that
-
-The form it is written here - is using infix syntax which makes them really nice to work with in scala
-and it looks very similar to regular scala List builder
-
-<trait definition>
-
-If we would deconstruct it into regular prefix form, it would look like:
-```scala
-val user =
-::(1L,
-  ::()
-)
-```
-
-So, the infix type constructing syntax enables this beautiful style, 
-
-
-so you can put there different types of things and then can do all kinds of dirty things with it like
-h.get(_2): T // 
-
-mapping over with functions depending on type
-
-rise your hands who have never heard of HList?
-
 ---
 name: coproduct
 
-# ~~CoHList~~ Coproduct
+# Coproduct
 
-Once you nailed a HList part - for Coproduct it is quite similar
+Once you feel comfortable with an HList - for Coproduct it is quite similar
 
 ```scala
 sealed trait Coproduct
@@ -759,9 +854,40 @@ case class Inr[+H, +T <: Coproduct](tail : T) extends :+:[H, T]
 sealed trait CNil extends Coproduct
 
 ```
+Usage:
+
+```scala
+// 'kind-of' Either[Int, String, Boolean]
+type Co = Int :+: String :+: Boolean :+: CNil
+
+val co1 = Inl(42L) // Int :+: String :+: Boolean :+: CNil
+val co2 = Inr(Inl("forty-two") // Int :+: String :+: Boolean :+: CNil
+val co3 = Inr(Inr(Inl(true)) // Int :+: String :+: Boolean :+: CNil
+```
 
 ???
+>
+
+Pretty much the same thing goes with Coproduct
+<p>
+but unlike HList.Cons - it has two variants - either holding a value or a tail which is also either a value or tail
+<p>
+and here is the usage of it
+<p>
+unlike HList - we can't use the same syntax to construct
+<p>
+so overall - the Coproduct can have only one value but still preserves type information about all values that can be contained in it.
+And the value of it determined by the "path" made by these InL and InR
+<p>
 Unlike HNil - CNil doesn't convey any information - so this achieved through not having any value for CNil (sealed trait)
+<p>
+
+<p>
+
+<p>
+
+
+.red[BTW] - the strange HList name is because Product was already taken in scala library. So the creator of the library chose HList name
 
 >
 <!-- ------------------------------------------------------------------------------------------------------------ -->
@@ -770,7 +896,14 @@ name: generic1
 class: inverse, middle, center
 count: false
 
-# Generic
+# shapeless.Generic
+
+???
+
+- But how can we go from case class to HList representation?
+- One of the essential instruments in shapeless is a Generic ?utility?
+- which provides us with a nice mechanism to convert between Product representation (means case class / sealed trait) and its generic representations (HList/Coproduct)
+- Its called Generic
 
 ---
 name: generic2
@@ -793,6 +926,10 @@ val generic = Generic[User]
 //]}
 ```
 
+???
+
+And it gives us a possibility to convert case class into HList
+
 ---
 count: false
 name: generic3
@@ -810,42 +947,59 @@ trait Generic[A] {
 }
 ```
 
----
-count: false
-name: generic3
-
-# Generic
-
+### Usage:
 
 ```scala
-import shapeless.Generic
+scala> val user = User(1L, "josh", true)
+user: User = User(1,josh,true)
 
-case class User(id: Long, name: String, active: Boolean)
+scala> generic.to(user)
+res2: res1.Repr = 1 :: josh :: true :: HNil
 
-val generic = Generic[User]
-// res0: shapeless.Generic[User]{type Repr = shapeless.::[Long,
-//  shapeless.::[String,
-//      shapeless.::[Boolean,
-//          shapeless.HNil
-//      ]
-//  ]
-//]}
-
-val user = User(1L, "Josh", true)
-
-val genericUser = generic.to(user)
-// genericUser: generic.Repr = 1 :: Josh :: true :: HNil
-
-generic.from(repr)
-// res1: User = User(1,Josh,true)
+scala> generic.from(res2)
+res3: User = User(1,josh,true)
 ```
-
-<!-- ------------------------------------------------------------------------------------------------------------ -->
 
 ???
 
-And the core abstraction which enables it in shapeless is something called Generic
+- looks pretty straitforward - there are type of the generic representation and two methods to convert to and from generic representation
 
+<!-- - here is a trait which defines and interface of this Generic object - as you can see it has this abstract type member - which is not defined here - but it was defined in the instance we summoned for the user previously. -->
+
+- This is how we can use it
+
+---
+count: false
+name: generic4
+
+# Generic
+
+```scala
+trait Generic[A] {
+
+* type Repr
+
+  def to(value: A): Repr
+
+  def from(value: Repr): A
+}
+```
+### Usage:
+
+```scala
+scala> val user = User(1L, "josh", true)
+user: User = User(1,josh,true)
+
+scala> generic.to(user)
+res2: res1.Repr = 1 :: josh :: true :: HNil
+
+scala> generic.from(res2)
+res3: User = User(1,josh,true)
+```
+???
+
+- I want to pay your attention to this 'type Repr'
+- the instance of this trait holds the generic representation type - which is either HList or Coproduct depending on the type of the value we supplied with type A
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
@@ -857,114 +1011,220 @@ count: false
 
 ???
 
+Ok, lets leave HLists stuff on the side just for a moment - the type class pattern
+<p>
 Well, as you can see - an astronaut is a little bit overwhelmed here
 but thats understandable, well..
+---
+# Type Class pattern
+
+### scala standard library
+
+#### - Numeric (Collection's `sum, product, min, max`)
+#### - Ordering (Collection's `sorted`)
+#### - CanBuildFrom (whole collections api)
+##### - IsSeqLike
+##### - IsTraversableOnce
+
+### Cats, Scalaz (all of the functional abstractions like Functor, Applicative, Monad, ...)
+
+<!-- <img src="resources/type-class-find.png"> -->
+
+???
+
+Although certain core functionalities in scala standard library are built across Type Class pattern
+there are only a few mentions of it in the whole codebase. 
+
+<p>
+And this is kind of strange to me.
+<p>
+Here are some of the examples from the standard library
+<p>
+- Type classes are all over the place
+<p> The most familiar to everybody should be Ordering
+<p> So whenever you do sorting in scala you use type class pattern.
+
+- All of the FP primitives like Functor/Applicative/Monad are defined in popular FP libraries like scalaz/Cats
+using this pattern
+
 ---
 
 # Type Class pattern
 
-```scala
-trait CSVSerializer[A] {
+.left-column[
+  ### scala.Ordering
+]
+.right-column[
+  ```scala
+  /**
+    * Ordering is a trait whose instances each represent
+    * a strategy for sorting instances of a type.
+    * ...
+    */
 
-  def apply(a: A): String
-}
-```
+  trait Ordering[T] extends Comparator[T] {
+    
+   /**
+     * Returns an integer whose sign communicates
+     * how x compares to y.
+     */
+    def compare(x: T, y: T): Int
+  }
+  ```
+]
 
 ???
 
-This is vere functional type of polymorphism
-instead of overloading in OO style
+.red[Auditory] Btw, how many of you feel like you are not familiar with type class pattern?
 
-if you just recently switched from Java then think about Comparable and you will understand typeclasses
+<p>In order to understand lets take a look at the simplified version of Ordering trait in scala library
 
-The essential parts of typeclass pattern are
+<p>
+BTW As you can see it implements Java comparator - so type class pattern was used by many of us long ago in Java (if you come from java to scala)
 
-- parameterized interface
-- instances for concretized types (implicits) - usually put in companion object
-- implicit parameter - type boud / context bound
+---
+name: ordering-inst
+count: false
 
-When you see this huge deifinition - start from looking for some abstract parameterized interface with one or few methods
-this is a way to distinguish a typeclass pattern
-All these stuff enclosed in companion object
-Why in companion object you may ask - because it is the scope where compiler will search for implicits without special imports
+# Type Class pattern
 
+.left-column[
+  ### scala.Ordering
+  ### Definition
+]
+.right-column[
+  ```scala
+  trait Ordering[T] extends Comparator[T] { 
+    def compare(x: T, y: T): Int
+  }
+  ```
+]
+???
 
-The essential parts of type-class definition are:
-
-lets leave HLists stuff on the side just for a moment - the type class pattern
-
-The idea behind type-class pattern is very similar (in some sense) to implicit class pattern
-Came from haskell
-
-Ordered(Ordering)
-
-For those of you who is not familiar with type-class pattern - you can think about implicit class
-the very functional type of polymorphism - when we extend functionality of some class without touching it
-on the contrary of inheritance in OOP polymorphism
-implicit class on steroids - what if you need to provide different implementations depending on some polymorphic type?
-lets look at the following:
-trait CSVSerializer[A] {
-  def serialize(a: A): String
-}
-as you can see there is no implicits or anything scary here - it just very abstract definition of some functionality
-you capture very basic functionality into interface
-
-then lets define some instances - lets say we need to serialize Int
-
-Type classes are all over the place
-The most familiar to everybody should be Ordering
-
-All of the FP primitives like Functor/Applicative/Monad are defined in popular FP libraries like scalaz/Cats
-using this pattern
-
-
-
-Whenever you see a bunch of implicits under some 'object' namespace producing values of the same parameterized trait
-you can distinguish a Type Class pattern
-And again, you should start to read that code from that trait definition - do not pay a lot of attention to implicits
-
-
-????????
-починати з початку а не з кінця - нахріна це потрібно? проблематика?
-
-академічно дуже
-
-що таке shapeless??
-
-малюнки
-
-sidebar with current item
+- so the basic building blocks of the Type Class pattern are - definition
+<p> as a parameterized trait becuase if its not parameterized then the whole pattern doesn't make sense as there can be only one instance of it
 
 ---
 count: false
 
 # Type Class pattern
 
-```scala
-object CSVSerializer {
-
-  def apply[A](implicit serializer: CSVSerializer[A]): CSVSerializer[A] = serializer
-
-  implicit class WithEncode[A](a: A) {
-    def serialize(implicit serializer: CSVSerializer[A]) = serializer.serialize(a)
+.left-column[
+  ### scala.Ordering
+  ### Definition
+  ### Instances
+]
+.right-column[
+  ```scala
+  trait Ordering[T] extends Comparator[T] { 
+    def compare(x: T, y: T): Int
   }
-}
-```
+  ```
+  ```scala
+  object Ordering {
+    implicit val intOrd: Ordering[Int] = new Ordering[Int] {
+      def compare(x: Int, y: Int) = lang.Integer.compare(x, y)
+    }
+    implicit val longOrd: Ordering[Long] = new Ordering[Long] {
+      def compare(x: Long, y: Long) = lang.Long.compare(x, y)
+    }
+    ...
+  }
+  ```
+]
+???
 
-thats it - this is the basic idea - once you start using type-classes and build your functionality around it
-at some point you will have to deal with ADTs
+- instances, usually defined in a companion object 
+- Why in companion object you may ask - well, you can put it whatever you want - (and thats a good) but then you need to import them explicitly
+- companion - is the scope where compiler will search for implicits without special imports
+(((Although it will search there in the last turn)))
 
-You just need to start looking at the definition from the trait - typeclass definition
-and there can be a bunch of other stuff with implicits resolution helpers - apply,implicit class - but the main thing to look at is trat definition
 
-and then comes implicit instances - 
+---
+count: false
 
+# Type Class pattern
+
+.left-column[
+  ### scala.Ordering
+  ### Definition
+  ### Instances
+  ### implicit parameter
+]
+.right-column[
+  ```scala
+  trait Ordering[T] extends Comparator[T] { 
+    def compare(x: T, y: T): Int
+  }
+  ```
+  ```scala
+  object Ordering {
+    implicit val intOrd: Ordering[Int] = new Ordering[Int] {
+      def compare(x: Int, y: Int) = lang.Integer.compare(x, y)
+    }
+    implicit val longOrd: Ordering[Long] = new Ordering[Long] {
+      def compare(x: Long, y: Long) = lang.Long.compare(x, y)
+    }
+    ...
+  }
+  ```
+  ``` scala
+  def sorted[T](implicit ord: Ordering[T]): Repr
+  ```
+  ..or context bound
+  ``` scala
+  def sorted[T: Ordering]: Repr
+  ```
+]
+???
+
+- and implicit parameter or context bound
+<p>
+- So, this are the main building blocks of the Type Class pattern.
+<p>
+- To distinguish it - you should start from looking up a parameterized trait. And if its used somewhere as an implicit parameter to some function or class - then it is typeclass pattern. And instances can be defined anywhere - but usually they are in a companion object
+
+---
+
+# Type Class pattern
+
+.left-column[
+  ### scala.Ordering
+  ### Definition
+  ### Instances
+  ### implicit parameter
+  ### Usage:
+]
+.right-column[
+  ```scala
+  List(1, 3, 2).sorted
+  // at this point compiler is searching implicit value
+  // in the ?global?, local scope, imported scope, companion object
+  ```
+]
+???
+
+- Well, the implicit search is somewhat more sophisticated
+- and there probably are some other scopes - but thats beyond this presentation
+
+
+<p> This is vere functional type of polymorphism
+<p> instead of overloading in OO style - you are "overloading "
+<p> btw it come from haskell
+
+<p> if you just recently switched from Java then think about Comparable and you will understand typeclasses
+
+<p> When you see this huge definitions - start from looking for some parameterized trait with one or few methods
+<p> this is a way to distinguish a typeclass pattern
+<p> And again, you should start to read that code from that trait definition - do not pay a first attention to implicits to not to be overwhelmed
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
 name: simulacram
 
-# https://github.com/mpilquist/simulacrum
+# Type Class pattern
+
+### https://github.com/mpilquist/simulacrum
 
 ```scala
 @typeclass trait CSVSerializer[A] {
@@ -1005,17 +1265,63 @@ object CSVSerializer {
     def self: A
     def §(y: A): A = typeClassInstance.append(self, y)
   }
-
   trait ToCSVSerializerOps {
     implicit def toCSVSerializerOps[A](target: A)(implicit tc: CSVSerializer[A]): Ops[A] = new Ops[A] {
       val self = target
       val typeClassInstance = tc
     }
   }
-  object nonInheritedOps extends ToCSVSerializerOps
-
   ...
 ```
+
+---
+# CSV Serializer
+
+## Type Class definition
+
+```scala
+trait CSVSerializer[A] {
+
+  def serialize(a: A): List[String]
+}
+```
+
+???
+<p> - So lets return to our initial problem with serialization
+<p> - Lets define a type class which will define an interface for serializing functionality
+
+<p>as you can see there is no implicits or anything scary here - it just very abstract definition of some functionality
+<p>you capture very basic functionality into interface
+
+<!-- <p> For those of you who still feel a confusion with type-class pattern - you can think about implicit class on steroids -->
+<!-- <p> multiple implicit class definitions with the same interface - which allows you to extend functionality -->
+<!-- <p>the very functional type of polymorphism - when we extend functionality of some class without touching it -->
+<!-- <p>on the contrary of inheritance in OOP polymorphism -->
+<!-- implicit class on steroids - what if you need to provide different implementations depending on some polymorphic type? -->
+
+--
+count: false
+
+### lets define some helpers..
+
+```scala
+object CSVSerializer {
+
+  def apply[A](implicit serializer: CSVSerializer[A]): CSVSerializer[A] =
+                            serializer
+
+  implicit class WithSerialize[A](a: A) {
+    def toCSV(implicit serializer: CSVSerializer[A]) =
+                        serializer.serialize(a).mkString(",")
+  }
+}
+```
+???
+<p> And lets define some helpers in companion object
+<p> then lets define some instances - lets say we need to serialize Int
+
+<!-- thats it - this is the basic idea - once you start using type-classes and build your functionality around it
+at some point you will have to deal with ADTs -->
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
@@ -1030,7 +1336,9 @@ count: false
 
 ???
 
-All right so lets return to our example with CSV encoding and lets try to do some live-coding
+All right
+- Now comes interesting part
+- so lets return to our example with CSV encoding and lets try to do some live-coding
 
 .. live code
 basic instances for csv encoding
@@ -1062,6 +1370,12 @@ scala> def f(foo: Foo, t: foo.T) = ???
 scala>
 ```
 
+???
+
+- The reason of existence of this pattern is rather simple but one might be confused if you are not aware of this reason
+and your just see Aux all over the place
+- Lets take a look at this simple example
+
 --
 count: false
 
@@ -1076,16 +1390,18 @@ scala> type Aux[T0] = Foo { type T = T0 }
 
 scala> def f[T](foo: Aux[T], t: T) = ???
 // f: [T](foo: Aux[T], t: T)Nothing
-
 ```
 
 ???
 
-The reason of existence of this pattern is rather simple but you might be confused if you don't know about it
-and just seeing Aux all over the place
+- to workaround it - we simply move it to type parameter
+- and I want to pay your attention to that this type parameter is inferred from the value we are supplying
+- thats why its called auxilary - because there is no meaning behind it except overcoming limitations which scala compiler exposes in this place
+- and it is used all over the place in shapeless
 
 ---
 name: aux1
+class: bigger-middle-code
 
 # Aux Pattern
 
@@ -1095,13 +1411,8 @@ name: aux1
 
 ???
 
-<livecode>
+- so - here is how the Aux type looks like for Generic
 
-Aux pattern is something which comes naturally from constrains
-
-The rule of thumb is - 
-Whenever you need to summon instance with dependent type like `Foo[???] { type B = ??? }`
-you need to use type alias -> Aux pattern
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
@@ -1141,7 +1452,7 @@ case class User(id: Long, name: String, active: Boolean)
   /*2*/ CSVSerializer[::[Long, ::[User, HNil]]]
   /*3*/ CSVSerializer[::[User, HNil]]
   /*4*/ CSVSerializer[User]
-* /*5*/ CSVSerializer[::[Long, ::[Sting, ::[Boolean, HNil]]]] // failed
+* /*5*/ CSVSerializer[::[Long, ::[String, ::[Boolean, HNil]]]] // failed
 
 // diverging implicit expansion for type xyz.codefastdieyoung
 //        .CSVSerializer[Long :: String :: Boolean :: shapeless.HNil]
@@ -1159,19 +1470,23 @@ name: lazy
 ```scala
   import shapeless.Lazy
 
-  implicit def HConsEncoder[H, T <: HList](implicit
-*   hEncoder: Lazy[Encoder[H]],
-    tailEncoder: Encoder[T]
-  ): Encoder[H :: T] = { t =>
-    s"${hEncoder(t.head)}, ${tailEncoder(t.tail)}"
+  implicit def HConsCSVSerializer[H, T <: HList](implicit
+*   hSerializer: Lazy[CSVSerializer[H]],
+    tailSerializer: CSVSerializer[T]
+  ): CSVSerializer[H :: T] = { t =>
+    s"${hSerializer(t.head)}, ${tailSerializer(t.tail)}"
   }
 ```
 
 wrap diverging implicit parameter...
 
+- ## it suppresses implicit divergence at compile time
+- ##it defers evaluation of the implicit parameter at runtime
+
 ???
 
-Lazy to the rescue
+- Lazy to the rescue!
+- it uses macro
 
 ---
 name: shapeless
@@ -1228,6 +1543,7 @@ very simple at first - it enables a lot more sophisticated in connection with im
 name: debugging
 class: white-text, background-cover
 count: false
+exclude: true
 
 # Debugging implicits
 
@@ -1278,11 +1594,13 @@ class: bottom, center, background-cover
 ---
 count: false
 layout: true
+exclude: true
 
 # Generic
 
 ### what if we would encode Repr as type parameter rather than type member?
 ---
+exclude: true
 
 ```scala
 trait Generic[A, Repr] {
@@ -1292,6 +1610,7 @@ trait Generic[A, Repr] {
 ```
 
 ---
+exclude: true
 count: false
 name: generic-shape
 
@@ -1312,6 +1631,7 @@ And enables us to derive type-class instances for arbitrary case-classes
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+exclude: true
 count: false
 class: live-code1
 layout: false
@@ -1346,6 +1666,7 @@ Ok, lets try to do something interesting with HLists and Type Classes
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+exclude: true
 count: false
 
 # __ shapeless.ops.hlist._ __
@@ -1366,6 +1687,7 @@ And there are a whole bunch of other stuff - the definition of
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+exclude: true
 name: tuple-ops
 
 # Tuple ops
@@ -1392,12 +1714,14 @@ Thats where all those tuple extensions come from
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+exclude: true
 class: inverse, middle, center
 count: false
 
 # Dependent types
 
 ### type members
+### singleton types
 ### implicit resolution
 ### neat syntax
 <!-- - neat syntax enabled by implicit's sugar -->
@@ -1409,16 +1733,18 @@ todo
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+exclude: true
 name: dep-fns
 
 # Dependently typed functions
 
-We've already seen a Last, Init type classes (or something else)
-Lets think about application of them and remind classic scala function definitions
+We've already seen a Last type class
+Lets think about application of it and remind classic scala function definitions:
 
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+exclude: true
 count: false
 template: dep-fns
 
@@ -1432,11 +1758,25 @@ template: dep-fns
 
     def apply(t: T): R
   }
+
+  ...
+
+  def func0[R]: Unit => R
+
+  def func1[T, R]: T => R
+
+  ...
 ```
 
+???
+
+Here we have regular
+
 ---
+exclude: true
 count: false
 template: dep-fns
+
 ```scala
   trait DependentFunction0 {
 *   type Out
@@ -1447,16 +1787,28 @@ template: dep-fns
 *   type Out
     def apply(t: T): Out
   }
+
+  ...
 ```
 
 ## Now its possible to have one function __DEPEND__ on other during implicit resolution
 
 ???
 
-The idea is to have a type inside a trait with apply - we can output type in some other
+The idea is to have a type inside a trait along with function apply method
 
-So the only thing has been changed here is that we moved the result type of the function into type field
-That means we can build a chains of dependant functions
+So the only thing that has been changed here is that we moved the result type of the function into type field
+
+And the result of the function now - is not just a value provided by the execution of 'apply' method - but the type member 'Out'
+contained in the instance of that function can be considered the result of the function too
+Thereby we have a Type which depends on a value. or Dependent type
+
+<h2>And to summarize</h2>: here we can have an instance of function based on the input type (using type-class plus implicits), and then instance of that function provides output type. In other words output type depends on input type - so that means we can build a functions over types. Which makes Scala Dependent type language basically.
+
+So using such technic we can build a chains of dependant functions. We will see later how we can use that to build something really interesting
+
+<h2>BTW</h2>
+In shapeless there are such DependentFunc traits to kind-of ?summarize? all such functions 
 
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
@@ -1510,6 +1862,7 @@ In order to provide some even more context - lets look at the , and try to kind 
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+exclude: true
 class: inverse, middle, center
 count: false
 
@@ -1517,12 +1870,13 @@ count: false
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+exclude: true
 
 # What has been lost here?
 
 
 ```scala
-type User = Long :: Sting :: Boolean :: Role :: HNil
+type User = Long :: String :: Boolean :: Role :: HNil
 
 type Role = Admin :+: Client
 type Admin = Long :+: Boolean :+: CNil
@@ -1544,6 +1898,7 @@ Ok, lets return to this User class representation
 Which essential part of a User class has been lost here?
 
 ---
+exclude: true
 count: false
 
 # Capture field names?
@@ -1560,10 +1915,12 @@ case class User(id: Long, name: String, active: Boolean)
 
 ???
 
-Right, We've lost information about field names,.. (and class name as well)
-In case of CSV serialization - it is sufficient, but if we need to serialize to Json we need to perserve field names as well
+Right, We've lost information about field names,.. (and in fact - class name as well)
+In case of CSV serialization - it is sufficient,
+but if we need to serialize for instance to Json or XML we need to perserve field names as well
 
 ---
+exclude: true
 count: false
 
 # LabelledGeneric
@@ -1598,12 +1955,14 @@ But what lies behind this double arrow??
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+exclude: true
 name: phantom types
 layout: true
 
 # Accessing field name at runtime
 
 ---
+exclude: true
 
 .left-column[
   ### Singleton types
@@ -1629,16 +1988,32 @@ layout: true
   ```
 ]
 --
+exclude: true
 count: false
 .right-column[
   ```scala
   // scala 2.12
-  * val int42: 42 = 42
-  * val int42: 42 = 41 // will not compile
+*  val int42: 42 = 42
+*  val int42: 42 = 41 // will not compile
   ```
 ]
 
+???
+
+As we all know there is a syntax for getting type of the 'object' value in scala
+And there of course exists only one such type for that singleton value
+
+But there is no such syntax for other literals in scala (we can't write 1.type)
+Using shapeless we can get such a type though using some (magin again)
+
+So you can have an instance which can be assigned only to itself - the type restricts
+
+And I want to pay your attention to that string singleton type - it preserves a value of the string - which is very interesting  and valueable I think
+
+<h2>BTW</h2> the singleton types actually exist in scala for a long time in scala compiler but there were no syntax to use them in language syntactically (while writing code). There is a support in typelevel scala, and should be in scala2.12 (I havn't checked honestly)
+
 ---
+exclude: true
 count: false
 
 .left-column[
@@ -1659,6 +2034,11 @@ count: false
   ### Shapeless:
 
   ```scala
+  type FieldType[K, +V] = V with KeyTag[K, V]
+  trait KeyTag[K, +V]
+  ```
+
+  ```scala
   import shapeless.labelled.{KeyTag, FieldType}
   import shapeless.syntax.singleton._
 
@@ -1674,6 +2054,7 @@ count: false
 There is one trick we can do with types in scala
 
 ---
+exclude: true
 count: false
 
 .left-column[
@@ -1711,7 +2092,7 @@ count: false
 ---
 count: false
 name: witness
-exclude: false
+exclude: true
 
 .left-column[
   ### Singleton types
@@ -1755,30 +2136,61 @@ Here comes shapeless Witness
 
 ???????
 btw - I'm using TypelevelScala2.12
-btw - scala2.12 and typelevel scala supports singleton types already
+btw - typelevel scala supports singleton types already
 
 ---
+exclude: true
 ## Again
-
---
-count: false
 
 ```scala
 A with B
 ```
+???
+
+Again:
+so we can use this type mixing technique to tag type A with type B
+
+---
+exclude: true
+count: false
+
+## Again
+
+```scala
+type A = ???
+...
+case class Foo(
+  field: A
+)
+```
 --
+exclude: true
 count: false
 
 ```scala
-type Field = A with KeyTag[String("..."), B]
+type Field = A with KeyTag[String("..."), A]
 ```
+
+???
+
+and as for type B we would use a type KeyTag which holds information about type of the field and name of the field in the form of the singleton
+so we get a new type which preserves information about field name and type of the field
+
 --
+exclude: true
 count: false
 
 ```scala
 val witness = implicitly[Witness.Aux[Field]]
 ```
+
+???
+
+to get field name as a runtime value string
+we use implicitly summoned Witness instance like this
+
 --
+exclude: true
 count: false
 
 ```scala
@@ -1787,6 +2199,48 @@ witness.value = "..." // field name
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+exclude: true
+layout: false
+name: labelledgeneric-type
+
+# LabelledGeneric
+
+```scala
+case class User(
+  id: Long,
+  name: String,
+  active: Boolean
+)
+```
+
+```scala
+scala> LabelledGeneric[User]
+
+res0: shapeless.LabelledGeneric[xyz.codefastdieyoung.User]{
+type Repr = 
+ ::[Long with KeyTag[Symbol with shapeless.tag.Tagged[String("id")],Long],
+  ::[String with KeyTag[Symbol with shapeless.tag.Tagged[String("name")],String],
+   ::[Boolean with KeyTag[Symbol with shapeless.tag.Tagged[String("active")],Boolean],
+    shapeless.HNil
+   ]
+  ]
+ ]
+} = shapeless.LabelledGeneric$$anon$1@74032484
+```
+
+???
+
+So this two techniques are used in shapeless to get the labelled representation of case class
+And here is how the resulting type looks like
+
+each type of the field is labelled by its field name
+
+Using this we can extend our previous example of csv serialization to JSON serialization
+once you understand previous example - there just need to extend it little bit to handle field names
+
+<!-- ------------------------------------------------------------------------------------------------------------ -->
+---
+exclude: true
 layout: false
 name: json-serialize
 
@@ -1794,6 +2248,7 @@ name: json-serialize
 
 ### [github.com/fommil/spray-json-shapeless]()
 ### [github.com/circe/circe]()
+### [argonaut]()
 
 ```scala
 val user = User(1, "Jimmy", true, "admin")
@@ -1809,7 +2264,6 @@ Gives:
   "role": "admin"
 }
 ```
-
 ???
 
 spray-json - Probably the most concise json serialization library - it uses exactly the same technics of derivation
@@ -1818,10 +2272,12 @@ We will not
 once you have understand the previous example with CSV encoding - the Json encoding is pretty straightforward
 using the same technics deriving instances for ADTs with just added field labels
 
+But we will not do json serialization today
 Instead we will try to do something really ambitious:
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
+exclude: true
 class: live-code1
 name: live-code-migration
 count: false
@@ -1884,11 +2340,15 @@ name: real-life
 background-image: url(resources/back-to-earth.jpg)
 class: top, white-text, background-cover
 count: false
+exclude: true
 
 # Back to Earth Again...
 
 ???
 
+That all looks very nice and its a lot of fun, but - there are certain problems too
+
+.red[no-no-no-no-no]
 WELL,
 many people consider shapeless as a tool a library  to use to construct other libraries
 I’m not particularly agree
@@ -1939,6 +2399,18 @@ count: false
 # Conclusion
 
 ???
+
+<p> once you master these technics you start seeing the use cases all over the place
+<p> - even as for serialization thats not that simple - in a simple case - it is simple
+<p> - but when you want to customize it - like partially serialize
+<p> Serialization - is just an example I chose to show a derivation technic
+<p> simple cases are - anytime you do operations with tuples and want to flatten them
+<p> Coproducts are very useful for error handling - to model errors
+<p> some - very interesting subject in scala - in java you can model the 
+<p> As for derivation - whenever you operate with type-classes over simple types
+<p> you would like to define an applicative functor typeclass instance for arbitrary type-class
+<p> in some cases the solution exists in some library - and in shepeless itself there are a plenty of stuff under ops package you can use
+<p> 
 
 - todo
 - always choose a minimal abstraction needed
@@ -1999,18 +2471,18 @@ name: astronauts-guide
 background-image: url(resources/astronauts-guide.png)
 ???
 
-you may wonder - what are those astronaut's pictures scattered across the entire presentation - well thats because of that awesome small book by Dave Gurnell - and actually this whole presentation was totally inspired by it
-you can find it on shapeless github - and you can order 
+- you may wonder - what are those astronaut's pictures scattered across the entire presentation - well thats because of that awesome small book by Dave Gurnell - and actually this whole presentation was totally inspired by it
+- you can find it on shapeless github - and you can order 
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
 count: false
 name: chill-out1
 class: background-cover
-background-image: url(resources/astro-beer-no-label.jpg)
+background-image: url(resources/astro-beer2.png)
 
 ???
-Let your types do work for you - so you can just get back, have a ball and chill out
+- So don't be scared about shapeless - Let your types do work for you - so you can just get back and chill out
 Like this
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
@@ -2018,7 +2490,8 @@ Like this
 count: false
 name: chill-out2
 class: background-cover
-background-image: url(resources/astro-bong.jpg)
+exclude: false
+background-image: url(resources/astro-bong1.png)
 
 ???
 Or maybe.. like this 
@@ -2033,16 +2506,21 @@ name: thanks
 
 * ## [@twist522]()
 
-* ## [blog.codefastdieyoung.xyz]()
-
 * ## [github.com/thatwist]()
 
 * ## [crossroadlabs.xyz]()
 
-???
+* # [vote.scalaua.com]()
 
-Small pieces of code from the presentation - you can find on the github page
-So please follow me on whatever blablabla thanks for coming)
+???
+<!-- * ## [blog.codefastdieyoung.xyz]() -->
+
+- Small pieces of code from the presentation - you can find on my github page
+- So please follow by any of these links here and subscribe to something there whatever you will find
+
+- and don't forget about voting
+
+<p> thanks for coming)
 
 <!-- ------------------------------------------------------------------------------------------------------------ -->
 ---
@@ -2051,8 +2529,9 @@ template: chill-out1
 
 ???
 
-<AUDITORY> BTW, Has anybody noticed anything wrong with this situation??)))
-<AUDITORY> Here is a cookie for the right answer!! <CROSSROADS CUP / T-SHIRT ???>
+- .red[AUDITORY] BTW, Has anybody noticed anything wrong with this situation??)))
+- .red[AUDITORY] Here is a cookie for the right answer!! .red[CROSSROADS CUP / T-SHIRT]
+
 - He is in space suite!! He can't drink that beer!!!)) Ha-Ha - take the cookie, you won))
 
     </textarea>
@@ -2070,7 +2549,8 @@ template: chill-out1
         highlightLines: true,
         highlightLanguage: 'scala',
         // highlightStyle: 'monokai'
-        highlightStyle: 'ocean'
+        highlightStyle: 'ocean',
+        navigation: { scroll: false }
       });
       // extract the embedded styling from ansi spans
       $('code.terminal span.hljs-ansi').replaceWith(function(i, x) {

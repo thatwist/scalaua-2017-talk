@@ -5,7 +5,7 @@ lazy val commonSettings = Seq(
   version := "1.0",
   scalaVersion := "2.12.1",
   scalaOrganization := "org.typelevel",
-  scalacOptions ++= Seq("-Yliteral-types", "-Ykind-polymorphism", "-Yinduction-heuristics")
+  scalacOptions ++= Seq(/*"-Yliteral-types", */"-Ykind-polymorphism", "-Yinduction-heuristics")
 )
 
 lazy val dependencies = Seq(
@@ -21,22 +21,22 @@ lazy val core = project.in(file("core")).settings(commonSettings ++ dependencies
 
 lazy val example1 = project.dependsOn(core)
   .settings(Seq(
-    mainClass in Compile := Some("xyz.codefastdieyoung.Example1")
+    mainClass in Compile := Some("Example1")
   ) ++ commonSettings ++ dependencies)
 
 lazy val example2 = project.dependsOn(core)
   .settings(Seq(
-    mainClass in (Compile, run) := Some("xyz.codefastdieyoung.Ex2Case1")
+    mainClass in (Compile, run) := Some("Ex2Case1")
   ) ++ commonSettings ++ dependencies)
 
 lazy val example3 = project.dependsOn(core)
   .settings(Seq(
-    mainClass in (Compile, run) := Some("xyz.codefastdieyoung.Example3")
+    mainClass in (Compile, run) := Some("Example3")
   ) ++ commonSettings ++ dependencies)
 
 lazy val example4 = project.dependsOn(core)
   .settings(Seq(
-    mainClass in Compile := Some("xyz.codefastdieyoung.Example4")
+    mainClass in Compile := Some("Example4")
   ) ++ commonSettings ++ dependencies)
 
 lazy val root = (project in file("."))
