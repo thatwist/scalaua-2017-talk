@@ -6,14 +6,12 @@ case class User(
   id: Long,
   name: String,
   active: Boolean,
-  score: Double = 1d
+  score: Double = 1.0d
 )
 
 trait CSVSerializer[T] {
   def serialize(t: T): List[String]
 }
-
-trait LowPriorityImplici
 
 object CSVSerializer {
 
@@ -26,99 +24,45 @@ object CSVSerializer {
 
   implicit val longSerializer: CSVSerializer[Long] =
     (t: Long) => List(t.toString)
-  implicit val stringSerializer: CSVSerializer[String] =
-    (t: String) => List(t.toString)
+
   implicit val booleanSerializer: CSVSerializer[Boolean] =
     (t: Boolean) => List(t.toString)
 
-  implicit val hnilSeializer: CSVSerializer[HNil] =
-    (_: HNil) => Nil
+  implicit val stringSerializer: CSVSerializer[String] = new CSVSerializer[String] {
+    override def serialize(t: String): List[String] = List(t)
+  }
 
-  implcit
+  implicit val doubleSerializer: CSVSerializer[Double] = new CSVSerializer[Double] {
+    override def serialize(t: Double): List[String] = List("%.2f".format(t))
+  }
 
-  implicit def hconsSerializer[H, T <: HList](
-    implicit hSerial: Lazy[CSVSerializer[H]],
-    tSerial: CSVSerializer[T]
+  implicit val hnilSerializer: CSVSerializer[HNil] = (t: HNil) => Nil
+
+  /* implicit def hConsSerializer1[H, T <: HList](
+   *   implicit hS: CSVSerializer[H],
+   *   tS: CSVSerializer[T]
+   * ): CSVSerializer[H :: T] = (t: H :: T) =>
+   *   hS.serialize(t.head) ::: tS.serialize(t.tail) */
+
+  implicit def hConsSserializer[H, T <: HList](
+    implicit hS: Lazy[CSVSerializer[H]],
+    tS: CSVSerializer[T]
   ): CSVSerializer[H :: T] =
-    (t: H :: T) =>
-      hSerial.value.serialize(t.head) ::: tSerial.serialize(t.tail)
+    (h: H :: T) => hS.value.serialize(h.head) ::: tS.serialize(h.tail)
 
-  implicit def genSerializer[P, Repr0](
-    implicit gen: Generic.Aux[P, Repr0],
-    reprSerializer: Lazy[CSVSerializer[Repr0]]
-  ): CSVSerializer[P] = (p: P) =>
-    reprSerializer.value.serialize(gen.to(p))
+  implicit def genSerializer[T, Repr0](
+    implicit gen: Lazy[Generic.Aux[T, Repr0]],
+    serializer: CSVSerializer[Repr0]
+  ): CSVSerializer[T] = (t: T) => serializer.serialize(gen.value.to(t))
 }
-
 import CSVSerializer._
 
 object Ex2Case1 extends App {
 
+
   val user = User(1L, "josh", active = true)
-  val userCSV = user.toCSV
-  println(userCSV)
-  assert(userCSV == "1,josh,true")
 
-  implicitly[Double :: HNil]
+  println(user.toCSV)
 
-  println(Account(2L, user).toCSV)
-
-//
-//  CSVSerializer[Account]
-//  println(Account(1L, user).toCSV)
-//
-//  CSVSerializer[]
-
-  // implicitly[User :: HNil]
+  Account(1L, user)
 }
-
-
-
-
-
-
-
-/*
-
- x define a type class
- x define instances for primitive types
- - define hnil instance
- - define hcons instance
- - define generic instance
- - test
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- - Coproduct instances?
- - debugging problem
- - define fallback implicit
-
- */
-
-
-
-
-
-
-

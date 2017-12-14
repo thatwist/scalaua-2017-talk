@@ -5,7 +5,8 @@ lazy val commonSettings = Seq(
   version := "1.0",
   scalaVersion := "2.12.1",
   scalaOrganization := "org.typelevel",
-  scalacOptions ++= Seq(/*"-Yliteral-types", */"-Ykind-polymorphism", "-Yinduction-heuristics")
+  scalacOptions ++= Seq(/*"-Yliteral-types", */"-Ykind-polymorphism", "-Yinduction-heuristics"),
+  ensimeScalaVersion in ThisBuild := "2.12.1"
 )
 
 lazy val dependencies = Seq(
